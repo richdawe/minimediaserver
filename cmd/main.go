@@ -5,29 +5,36 @@ import (
 	"io"
 	"os"
 
+	"github.com/richdawe/minimediaserver/services/catalog"
 	"github.com/richdawe/minimediaserver/services/storage"
 )
 
-type StorageService interface {
-	FindTracks() []storage.Track
-	ReadTrack(ID string) (io.Reader, error) // may need better name - GetTrack?
+func handleErr(err error) {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
 }
 
 func main() {
 	fmt.Println("Hai Rich")
 
-	var storageService StorageService
-	//storageService, err := storage.NewNullStorage()
-	storageService, err := storage.NewDiskStorage("Music/cds")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
-	}
+	catalogService, err := catalog.New()
+	handleErr(err)
 
-	tracks := storageService.FindTracks()
+	nullStorage, err := storage.NewNullStorage()
+	handleErr(err)
+	err = catalogService.AddStorage(nullStorage)
+	handleErr(err)
+	diskStorage, err := storage.NewDiskStorage("Music/cds")
+	handleErr(err)
+	err = catalogService.AddStorage(diskStorage)
+	handleErr(err)
+
+	tracks := catalogService.GetTracks()
 	for _, track := range tracks {
 		fmt.Println(track.Name, track.ID)
-		r, err := storageService.ReadTrack(track.ID)
+		r, err := track.StorageService.ReadTrack(track.ID)
 		if err != nil {
 			fmt.Printf("error reading track %s: %s\n", track.ID, err)
 			continue
@@ -41,6 +48,10 @@ func main() {
 			fmt.Printf("read track %s\n", track.ID)
 		}
 	}
+
+	e, err := setupEndpoints(catalogService)
+	handleErr(err)
+	e.Logger.Fatal(e.Start(":1323"))
 
 	fmt.Println("DONE")
 }

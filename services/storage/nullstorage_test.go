@@ -12,6 +12,11 @@ func TestNullStorage(t *testing.T) {
 	s, err := NewNullStorage()
 	require.NoError(t, err)
 
+	t.Run("GetID", func(t *testing.T) {
+		id := s.GetID()
+		assert.NotEmpty(t, id)
+	})
+
 	t.Run("FindTracks", func(t *testing.T) {
 		tracks := s.FindTracks()
 		assert.NotNil(t, tracks)

@@ -7,10 +7,17 @@ import (
 	"io/fs"
 	"log"
 	"os"
+
+	"github.com/google/uuid"
 )
 
 type DiskStorage struct {
+	ID   string
 	Path string
+}
+
+func (ds *DiskStorage) GetID() string {
+	return ds.ID
 }
 
 func (ds *DiskStorage) FindTracks() []Track {
@@ -56,6 +63,7 @@ func (ds *DiskStorage) ReadTrack(ID string) (io.Reader, error) {
 
 func NewDiskStorage(Path string) (*DiskStorage, error) {
 	return &DiskStorage{
+		ID:   uuid.New().String(),
 		Path: Path,
 	}, nil
 }

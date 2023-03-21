@@ -4,13 +4,21 @@ import (
 	"bytes"
 	"embed"
 	"io"
+
+	"github.com/google/uuid"
 )
 
 //go:embed example.ogg
 var exampleFS embed.FS
 var exampleFilename = "example.ogg"
 
-type NullStorage struct{}
+type NullStorage struct {
+	ID string
+}
+
+func (ns *NullStorage) GetID() string {
+	return ns.ID
+}
 
 func (ns *NullStorage) FindTracks() []Track {
 	tracks := make([]Track, 0, 1)
@@ -31,5 +39,7 @@ func (ns *NullStorage) ReadTrack(ID string) (io.Reader, error) {
 }
 
 func NewNullStorage() (*NullStorage, error) {
-	return &NullStorage{}, nil
+	return &NullStorage{
+		ID: uuid.New().String(),
+	}, nil
 }

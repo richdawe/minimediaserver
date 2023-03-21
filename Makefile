@@ -9,7 +9,7 @@ run:
 # Requires 'reflex' from https://github.com/cespare/reflex
 # to be in the path.
 watch:
-	reflex -r '\.go$$' -s -- go run ./cmd
+	reflex -r '(\.go|\.tmpl\.html)$$' -s -- go run ./cmd
 
 clean:
 	rm -fv bin/minimediaserver

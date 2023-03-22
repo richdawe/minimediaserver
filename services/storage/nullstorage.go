@@ -23,14 +23,16 @@ func (ns *NullStorage) GetID() string {
 func (ns *NullStorage) FindTracks() []Track {
 	tracks := make([]Track, 0, 1)
 	track := Track{
-		Name: "Example",
-		ID:   exampleFilename,
+		Name:     "Example",
+		ID:       uuid.New().String(),
+		Location: "/null/" + exampleFilename,
+		MIMEType: "audio/ogg",
 	}
 	tracks = append(tracks, track)
 	return tracks
 }
 
-func (ns *NullStorage) ReadTrack(ID string) (io.Reader, error) {
+func (ns *NullStorage) ReadTrack(id string) (io.Reader, error) {
 	data, err := exampleFS.ReadFile(exampleFilename)
 	if err != nil {
 		return nil, err

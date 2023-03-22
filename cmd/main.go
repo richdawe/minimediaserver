@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/labstack/echo/v4/middleware"
+
 	"github.com/richdawe/minimediaserver/services/catalog"
 	"github.com/richdawe/minimediaserver/services/storage"
 )
@@ -17,11 +19,10 @@ func handleErr(err error) {
 }
 
 func main() {
-	fmt.Println("Hai Rich")
-
 	catalogService, err := catalog.New()
 	handleErr(err)
 
+	// TODO: need a config file for configuring storage backends
 	nullStorage, err := storage.NewNullStorage()
 	handleErr(err)
 	err = catalogService.AddStorage(nullStorage)
@@ -34,7 +35,7 @@ func main() {
 	tracks := catalogService.GetTracks()
 	for _, track := range tracks {
 		fmt.Println(track.Name, track.ID)
-		r, err := track.StorageService.ReadTrack(track.ID)
+		r, err := catalogService.ReadTrack(track)
 		if err != nil {
 			fmt.Printf("error reading track %s: %s\n", track.ID, err)
 			continue
@@ -51,6 +52,10 @@ func main() {
 
 	e, err := setupEndpoints(catalogService)
 	handleErr(err)
+
+	// TODO: need a config file for specifying HTTP server options
+	e.Use(middleware.Timeout())
+	e.Use(middleware.Logger())
 	e.Logger.Fatal(e.Start(":1323"))
 
 	fmt.Println("DONE")

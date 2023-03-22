@@ -7,5 +7,5 @@ import "io"
 type StorageService interface {
 	GetID() string
 	FindTracks() []Track
-	ReadTrack(ID string) (io.Reader, error) // may need better name - GetTrack?
+	ReadTrack(id string) (io.Reader, error) // may need better name - GetTrack?
 }

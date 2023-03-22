@@ -1,12 +1,8 @@
 package catalog
 
-import (
-	"github.com/richdawe/minimediaserver/services/storage"
-)
-
 type Track struct {
-	StorageService storage.StorageService
-
-	ID   string
-	Name string
+	ID               string
+	StorageServiceID string
+	Name             string
+	MIMEType         string // MIME type for data, see https://www.iana.org/assignments/media-types/media-types.xhtml#audio
 }

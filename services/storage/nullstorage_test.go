@@ -21,13 +21,19 @@ func TestNullStorage(t *testing.T) {
 		tracks := s.FindTracks()
 		assert.NotNil(t, tracks)
 		assert.Len(t, tracks, 1)
+		id := tracks[0].ID
+		assert.NotEqual(t, id, "example.ogg")
 		assert.Equal(t, tracks[0], Track{
-			Name: "Example",
-			ID:   "example.ogg",
+			Name:     "Example",
+			ID:       id,
+			Location: "/null/example.ogg",
+			MIMEType: "audio/ogg",
 		})
 	})
 	t.Run("ReadTrack", func(t *testing.T) {
-		r, err := s.ReadTrack("example.ogg")
+		tracks := s.FindTracks()
+		require.NotNil(t, tracks)
+		r, err := s.ReadTrack(tracks[0].ID)
 		require.NoError(t, err)
 
 		data, err := io.ReadAll(r)

@@ -21,13 +21,24 @@ func TestDiskStorage(t *testing.T) {
 		tracks := s.FindTracks()
 		assert.NotNil(t, tracks)
 		assert.Greater(t, len(tracks), 1)
-		assert.Equal(t, tracks[0], Track{
-			Name: "Example",
-			ID:   "example.ogg",
-		})
+		/*
+			assert.Equal(t, tracks[0], Track{
+				Name:     "Example",
+				ID:       "example.ogg",
+				Location: "not-empty",
+			})
+		*/
+		assert.NotEmpty(t, tracks[0].Name)
+		assert.NotEmpty(t, tracks[0].ID)
+		assert.NotEmpty(t, tracks[0].Location)
+		assert.NotEmpty(t, tracks[0].MIMEType)
+		assert.NotEqual(t, tracks[0].Name, tracks[0].ID)
+		assert.NotEqual(t, tracks[0].ID, tracks[0].Location)
 	})
 	t.Run("ReadTrack", func(t *testing.T) {
-		r, err := s.ReadTrack("example.ogg")
+		tracks := s.FindTracks()
+		require.NotNil(t, tracks)
+		r, err := s.ReadTrack(tracks[0].ID)
 		require.NoError(t, err)
 
 		data, err := io.ReadAll(r)

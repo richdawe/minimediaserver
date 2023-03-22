@@ -13,9 +13,9 @@
 
     <p>
         <ul>
-            {{range .}}
-                <li><a href="tracks/{{.ID}}">{{.Name}}</a></li>
-            {{end}}
+            {{ range . }}
+                <li><a href="tracks/{{.ID}}">{{ .Name }}</a></li>
+            {{ end }}
         </ul>
     </p>
 </body>

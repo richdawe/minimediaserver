@@ -1,7 +1,7 @@
 package main
 
 import (
-	_ "embed"
+	"embed"
 	"html/template"
 	"io"
 	"net/http"
@@ -11,11 +11,8 @@ import (
 	"github.com/richdawe/minimediaserver/services/catalog"
 )
 
-//go:embed root.tmpl.html
-var rootTemplate string
-
-//go:embed track.tmpl.html
-var trackTemplate string
+//go:embed templates/*
+var content embed.FS
 
 type TemplateRenderer struct {
 	templates *template.Template
@@ -27,7 +24,7 @@ func (tr *TemplateRenderer) Render(w io.Writer, name string, data any, c echo.Co
 
 func getRoot(c echo.Context, catalogService *catalog.CatalogService) error {
 	// TODO: how to catch errors in template rendering?
-	return c.Render(http.StatusOK, "root", catalogService.GetTracks())
+	return c.Render(http.StatusOK, "root.tmpl.html", catalogService.GetTracks())
 }
 
 func getTrack(c echo.Context, catalogService *catalog.CatalogService) error {
@@ -38,7 +35,7 @@ func getTrack(c echo.Context, catalogService *catalog.CatalogService) error {
 		return err
 	}
 	// TODO: available data types => different query parameters in template
-	return c.Render(http.StatusOK, "track", track)
+	return c.Render(http.StatusOK, "tracks.tmpl.html", track)
 }
 
 func getTrackData(c echo.Context, catalogService *catalog.CatalogService) error {
@@ -57,15 +54,10 @@ func getTrackData(c echo.Context, catalogService *catalog.CatalogService) error 
 }
 
 func setupEndpoints(catalogService *catalog.CatalogService) (*echo.Echo, error) {
-	t, err := template.New("root").Parse(rootTemplate)
+	t, err := template.ParseFS(content, "templates/*.tmpl.html")
 	if err != nil {
 		return nil, err
 	}
-	t.New("track").Parse(trackTemplate)
-	if err != nil {
-		return nil, err
-	}
-
 	tr := &TemplateRenderer{
 		templates: t,
 	}

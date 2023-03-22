@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/google/uuid"
@@ -24,13 +25,28 @@ func (ds *DiskStorage) GetID() string {
 	return ds.ID
 }
 
+// Find the tracks in this storage, and return the tracks
+// in a stable order.
 func (ds *DiskStorage) FindTracks() []Track {
 	if ds.tracksByID == nil {
 		ds.populateTracks()
 	}
-	tracks := make([]Track, 0, 1)
+
+	// Find and sort the track IDs based on the location
+	// of the track.
+	trackIDs := make([]string, 0, 1)
 	for _, track := range ds.tracksByID {
-		tracks = append(tracks, track)
+		trackIDs = append(trackIDs, track.ID)
+	}
+	sort.Slice(trackIDs, func(i int, j int) bool {
+		trackI := ds.tracksByID[trackIDs[i]]
+		trackJ := ds.tracksByID[trackIDs[j]]
+		return trackI.Location < trackJ.Location
+	})
+
+	tracks := make([]Track, 0, 1)
+	for _, trackID := range trackIDs {
+		tracks = append(tracks, ds.tracksByID[trackID])
 	}
 	return tracks
 }
@@ -54,6 +70,14 @@ func getMIMEType(filename string) string {
 	return mimeType
 }
 
+func ignoreMIMEType(mimeType string) bool {
+	switch mimeType {
+	case "application/binary":
+		return true
+	}
+	return false
+}
+
 func (ds *DiskStorage) populateTracks() {
 	tracks := make(map[string]Track, 0)
 
@@ -66,14 +90,19 @@ func (ds *DiskStorage) populateTracks() {
 		if d.IsDir() {
 			return nil
 		}
-		// TODO: ignore some file extensions and MIME types
-		mimeType := getMIMEType(d.Name())
+		location := ds.BasePath + "/" + path // TODO: proper cross platform concat
 
-		fmt.Println(d.Name(), path)
+		// Ignore some unknown MIME types
+		mimeType := getMIMEType(d.Name())
+		if ignoreMIMEType(mimeType) {
+			fmt.Printf("Ignoring file due to MIME type: %s\n", location)
+			return nil
+		}
+
 		track := Track{
 			Name:     d.Name(),
 			ID:       uuid.New().String(),
-			Location: ds.BasePath + "/" + path, // TODO: proper cross platform concat
+			Location: location,
 			MIMEType: mimeType,
 		}
 		tracks[track.ID] = track

@@ -1,0 +1,5 @@
+example.ogg is from https://commons.wikimedia.org/wiki/File:Example.ogg
+
+https://creativecommons.org/licenses/by-sa/3.0/deed.en
+
+Renamed to lower case

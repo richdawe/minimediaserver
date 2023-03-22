@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/labstack/echo/v4/middleware"
@@ -27,28 +26,10 @@ func main() {
 	handleErr(err)
 	err = catalogService.AddStorage(nullStorage)
 	handleErr(err)
-	diskStorage, err := storage.NewDiskStorage("Music/cds")
+	diskStorage, err := storage.NewDiskStorage("test/services/storage/diskstorage")
 	handleErr(err)
 	err = catalogService.AddStorage(diskStorage)
 	handleErr(err)
-
-	tracks := catalogService.GetTracks()
-	for _, track := range tracks {
-		fmt.Println(track.Name, track.ID)
-		r, err := catalogService.ReadTrack(track)
-		if err != nil {
-			fmt.Printf("error reading track %s: %s\n", track.ID, err)
-			continue
-		}
-
-		_, err = io.ReadAll(r)
-		if err != nil {
-			fmt.Printf("error reading data for track %s: %s\n", track.ID, err)
-			continue
-		} else {
-			fmt.Printf("read track %s\n", track.ID)
-		}
-	}
 
 	e, err := setupEndpoints(catalogService)
 	handleErr(err)

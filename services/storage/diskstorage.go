@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -18,7 +19,11 @@ type DiskStorage struct {
 	ID       string
 	BasePath string
 
-	tracksByID map[string]Track
+	tracksByID    map[string]Track
+	playlistsByID map[string]Playlist
+
+	sortedTracks    []Track
+	sortedPlaylists []Playlist
 }
 
 func (ds *DiskStorage) GetID() string {
@@ -27,28 +32,14 @@ func (ds *DiskStorage) GetID() string {
 
 // Find the tracks in this storage, and return the tracks
 // in a stable order.
-func (ds *DiskStorage) FindTracks() []Track {
+func (ds *DiskStorage) FindTracks() ([]Track, []Playlist) {
 	if ds.tracksByID == nil {
-		ds.populateTracks()
+		ds.tracksByID, ds.playlistsByID = ds.buildTracks()
 	}
-
-	// Find and sort the track IDs based on the location
-	// of the track.
-	trackIDs := make([]string, 0, 1)
-	for _, track := range ds.tracksByID {
-		trackIDs = append(trackIDs, track.ID)
+	if ds.sortedTracks == nil {
+		ds.sortedTracks, ds.sortedPlaylists = ds.buildSortedTracks()
 	}
-	sort.Slice(trackIDs, func(i int, j int) bool {
-		trackI := ds.tracksByID[trackIDs[i]]
-		trackJ := ds.tracksByID[trackIDs[j]]
-		return trackI.Location < trackJ.Location
-	})
-
-	tracks := make([]Track, 0, 1)
-	for _, trackID := range trackIDs {
-		tracks = append(tracks, ds.tracksByID[trackID])
-	}
-	return tracks
+	return ds.sortedTracks, ds.sortedPlaylists
 }
 
 func getMIMEType(filename string) string {
@@ -78,8 +69,23 @@ func ignoreMIMEType(mimeType string) bool {
 	return false
 }
 
-func (ds *DiskStorage) populateTracks() {
-	tracks := make(map[string]Track, 0)
+// TODO: test coverage for findPlaylist*()
+func findPlaylistLocation(location string) string {
+	return filepath.Dir(location)
+}
+
+func findPlaylistArtistAlbum(location string) (string, string) {
+	playlistLocation := findPlaylistLocation(location)
+
+	album := filepath.Base(playlistLocation)
+	artist := filepath.Base(filepath.Dir(playlistLocation))
+	return artist, album
+}
+
+func (ds *DiskStorage) buildTracks() (map[string]Track, map[string]Playlist) {
+	tracksByID := make(map[string]Track, 0)
+	playlistsByID := make(map[string]Playlist, 0)
+	playlistsByLocation := make(map[string]string, 0) // value is playlist ID
 
 	fileSystem := os.DirFS(ds.BasePath)
 
@@ -90,7 +96,7 @@ func (ds *DiskStorage) populateTracks() {
 		if d.IsDir() {
 			return nil
 		}
-		location := ds.BasePath + "/" + path // TODO: proper cross platform concat
+		location := filepath.Join(ds.BasePath, path)
 
 		// Ignore some unknown MIME types
 		mimeType := getMIMEType(d.Name())
@@ -105,11 +111,91 @@ func (ds *DiskStorage) populateTracks() {
 			Location: location,
 			MIMEType: mimeType,
 		}
-		tracks[track.ID] = track
+		tracksByID[track.ID] = track
+
+		// TODO: This builds playlists based on albums having their own directory.
+		// Other music collections (e.g.: my MP3s) use a flat format
+		// with everything encoded in one filename. Could use with the playlist building
+		// strategy being pluggable.
+		playlistLocation := findPlaylistLocation(location)
+
+		playlistID, ok := playlistsByLocation[playlistLocation]
+		if !ok {
+			artist, album := findPlaylistArtistAlbum(location)
+			playlistName := fmt.Sprintf("%s :: %s", artist, album)
+
+			playlist := Playlist{
+				Name:     playlistName,
+				ID:       uuid.New().String(),
+				Location: playlistLocation,
+				Tracks:   make([]Track, 0, 1),
+			}
+
+			playlistID = playlist.ID
+			playlistsByLocation[playlistLocation] = playlistID
+			playlistsByID[playlistID] = playlist
+		}
+
+		playlist := playlistsByID[playlistID]
+		playlist.Tracks = append(playlist.Tracks, track)
+		playlistsByID[playlistID] = playlist
 		return nil
 	})
 
-	ds.tracksByID = tracks
+	return tracksByID, playlistsByID
+}
+
+func (ds *DiskStorage) buildSortedTracks() ([]Track, []Playlist) {
+	tracksByID := ds.tracksByID
+	playlistsByID := ds.playlistsByID
+
+	if tracksByID == nil || playlistsByID == nil {
+		return make([]Track, 0), make([]Playlist, 0)
+	}
+
+	// Find and sort the track IDs based on the location
+	// of the track. Then build list of sorted tracks
+	// using the sorted list of track IDs.
+	trackIDs := make([]string, 0, 1)
+	for _, track := range tracksByID {
+		trackIDs = append(trackIDs, track.ID)
+	}
+	sort.Slice(trackIDs, func(i int, j int) bool {
+		trackI := tracksByID[trackIDs[i]]
+		trackJ := tracksByID[trackIDs[j]]
+		return trackI.Location < trackJ.Location
+	})
+
+	tracks := make([]Track, 0, 1)
+	for _, trackID := range trackIDs {
+		tracks = append(tracks, tracksByID[trackID])
+	}
+
+	// Find and sort the playlist IDs based on the location
+	// of the playlist. Then build list of sorted playlists
+	// using the sorted list of playlist IDs.
+	//
+	// TODO: This might need a pluggable strategy for music
+	// that is not split out into a directory per album
+	// (see also the comment in the building process).
+	playlistIDs := make([]string, 0, 1)
+	for _, playlist := range playlistsByID {
+		playlistIDs = append(playlistIDs, playlist.ID)
+	}
+	sort.Slice(playlistIDs, func(i int, j int) bool {
+		playlistI := playlistsByID[playlistIDs[i]]
+		playlistJ := playlistsByID[playlistIDs[j]]
+		return playlistI.Location < playlistJ.Location
+	})
+
+	playlists := make([]Playlist, 0, 1)
+	for _, playlistID := range playlistIDs {
+		playlists = append(playlists, playlistsByID[playlistID])
+	}
+
+	// TODO: sort tracks in playlist too
+
+	return tracks, playlists
 }
 
 func (ds *DiskStorage) ReadTrack(id string) (io.Reader, error) {

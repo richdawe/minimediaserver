@@ -14,13 +14,20 @@ var exampleFilename = "example.ogg"
 
 type NullStorage struct {
 	ID string
+
+	Tracks    []Track
+	Playlists []Playlist
 }
 
 func (ns *NullStorage) GetID() string {
 	return ns.ID
 }
 
-func (ns *NullStorage) FindTracks() []Track {
+func (ns *NullStorage) FindTracks() ([]Track, []Playlist) {
+	if ns.Tracks != nil && ns.Playlists != nil {
+		return ns.Tracks, ns.Playlists
+	}
+
 	tracks := make([]Track, 0, 1)
 	track := Track{
 		Name:     "Example",
@@ -29,7 +36,18 @@ func (ns *NullStorage) FindTracks() []Track {
 		MIMEType: "audio/ogg",
 	}
 	tracks = append(tracks, track)
-	return tracks
+
+	playlist := Playlist{
+		Name:     "null-playlist",
+		ID:       uuid.New().String(),
+		Location: "/null",
+		Tracks:   tracks,
+	}
+	playlists := []Playlist{playlist}
+
+	ns.Tracks = tracks
+	ns.Playlists = playlists
+	return ns.Tracks, ns.Playlists
 }
 
 func (ns *NullStorage) ReadTrack(id string) (io.Reader, error) {

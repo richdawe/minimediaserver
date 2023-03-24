@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 
 	"github.com/richdawe/minimediaserver/services/catalog"
 )
@@ -24,10 +25,16 @@ func (tr *TemplateRenderer) Render(w io.Writer, name string, data any, c echo.Co
 
 func getRoot(c echo.Context, catalogService *catalog.CatalogService) error {
 	// TODO: how to catch errors in template rendering?
-	return c.Render(http.StatusOK, "root.tmpl.html", catalogService.GetTracks())
+	return c.Render(http.StatusOK, "root.tmpl.html", make(map[string]string, 0))
 }
 
-func getTrack(c echo.Context, catalogService *catalog.CatalogService) error {
+func getTracks(c echo.Context, catalogService *catalog.CatalogService) error {
+	// TODO: how to catch errors in template rendering?
+	tracks, _ := catalogService.GetTracks()
+	return c.Render(http.StatusOK, "tracks.tmpl.html", tracks)
+}
+
+func getTracksByID(c echo.Context, catalogService *catalog.CatalogService) error {
 	id := c.Param("id")
 	track, err := catalogService.GetTrack(id)
 	if err != nil {
@@ -35,10 +42,10 @@ func getTrack(c echo.Context, catalogService *catalog.CatalogService) error {
 		return err
 	}
 	// TODO: available data types => different query parameters in template
-	return c.Render(http.StatusOK, "tracks.tmpl.html", track)
+	return c.Render(http.StatusOK, "tracksbyid.tmpl.html", track)
 }
 
-func getTrackData(c echo.Context, catalogService *catalog.CatalogService) error {
+func getTracksByIDData(c echo.Context, catalogService *catalog.CatalogService) error {
 	id := c.Param("id")
 	track, err := catalogService.GetTrack(id)
 	if err != nil {
@@ -53,6 +60,23 @@ func getTrackData(c echo.Context, catalogService *catalog.CatalogService) error 
 	return c.Stream(http.StatusOK, "audio/flac", r) // TODO: get data type from track
 }
 
+func getPlaylists(c echo.Context, catalogService *catalog.CatalogService) error {
+	// TODO: how to catch errors in template rendering?
+	_, playlists := catalogService.GetTracks()
+	return c.Render(http.StatusOK, "playlists.tmpl.html", playlists)
+}
+
+func getPlaylistsByID(c echo.Context, catalogService *catalog.CatalogService) error {
+	id := c.Param("id")
+	playlist, err := catalogService.GetPlaylist(id)
+	if err != nil {
+		// TODO: return appropriate error for e.g.: track that doesn't exist
+		return err
+	}
+	// TODO: available data types => different query parameters in template
+	return c.Render(http.StatusOK, "playlistsbyid.tmpl.html", playlist)
+}
+
 func setupEndpoints(catalogService *catalog.CatalogService) (*echo.Echo, error) {
 	t, err := template.ParseFS(content, "templates/*.tmpl.html")
 	if err != nil {
@@ -64,14 +88,26 @@ func setupEndpoints(catalogService *catalog.CatalogService) (*echo.Echo, error) 
 
 	e := echo.New()
 	e.Renderer = tr
+
+	e.Pre(middleware.RemoveTrailingSlash())
+
 	e.GET("/", func(c echo.Context) error {
 		return getRoot(c, catalogService)
 	})
+	e.GET("/tracks", func(c echo.Context) error {
+		return getTracks(c, catalogService)
+	})
 	e.GET("/tracks/:id", func(c echo.Context) error {
-		return getTrack(c, catalogService)
+		return getTracksByID(c, catalogService)
 	})
 	e.GET("/tracks/:id/data", func(c echo.Context) error {
-		return getTrackData(c, catalogService)
+		return getTracksByIDData(c, catalogService)
+	})
+	e.GET("/playlists", func(c echo.Context) error {
+		return getPlaylists(c, catalogService)
+	})
+	e.GET("/playlists/:id", func(c echo.Context) error {
+		return getPlaylistsByID(c, catalogService)
 	})
 	return e, nil
 }

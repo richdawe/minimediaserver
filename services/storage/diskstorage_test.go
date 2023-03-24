@@ -18,10 +18,14 @@ func TestDiskStorage(t *testing.T) {
 	})
 
 	t.Run("FindTracks", func(t *testing.T) {
-		tracks := s.FindTracks()
+		tracks, playlists := s.FindTracks()
 		assert.NotNil(t, tracks)
 		assert.Equal(t, len(tracks), 3)
 
+		assert.NotNil(t, playlists)
+		assert.Equal(t, len(playlists), 2)
+
+		// Check tracks
 		trackIDs := []string{
 			tracks[0].ID, tracks[1].ID, tracks[2].ID,
 		}
@@ -52,10 +56,49 @@ func TestDiskStorage(t *testing.T) {
 		assert.NotEmpty(t, trackIDs[2])
 		assert.NotEqual(t, trackIDs[0], trackIDs[1])
 		assert.NotEqual(t, trackIDs[1], trackIDs[2])
+
+		// Check playlists
+		playlistIDs := []string{
+			playlists[0].ID, playlists[1].ID,
+		}
+
+		assert.Equal(t, []Playlist{
+			{
+				Name:     "Artist :: Album1",
+				ID:       playlistIDs[0],
+				Location: "../../test/services/storage/diskstorage/Music/cds/Artist/Album1",
+				Tracks:   []Track{tracks[0], tracks[1]},
+			},
+			{
+				Name:     "Artist :: Album2",
+				ID:       playlistIDs[1],
+				Location: "../../test/services/storage/diskstorage/Music/cds/Artist/Album2",
+				Tracks:   []Track{tracks[2]},
+			},
+		}, playlists)
+	})
+
+	t.Run("StableIDs", func(t *testing.T) {
+		// Verify that the track ID and playlist ID are stable across
+		// calls to FindTracks.
+		tracks, playlists := s.FindTracks()
+		require.NotNil(t, tracks)
+		require.Equal(t, len(tracks), 3)
+		require.NotNil(t, playlists)
+		require.Equal(t, len(playlists), 2)
+
+		tracks2, playlists2 := s.FindTracks()
+		require.NotNil(t, tracks)
+		require.Equal(t, len(tracks), 3)
+		require.NotNil(t, playlists)
+		require.Equal(t, len(playlists), 2)
+
+		assert.Equal(t, tracks, tracks2)
+		assert.Equal(t, playlists, playlists2)
 	})
 
 	t.Run("ReadTrack", func(t *testing.T) {
-		tracks := s.FindTracks()
+		tracks, _ := s.FindTracks()
 		require.NotNil(t, tracks)
 		assert.Equal(t, len(tracks), 3)
 

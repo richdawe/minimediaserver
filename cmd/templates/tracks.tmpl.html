@@ -4,16 +4,19 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ .Name }} :: Minimediaserver</title>
+    <title>Minimediaserver</title>
 </head>
 <body>
-    <h1>Listen to {{ .Name }}</h1>
+    <h1>Welcome to Minimediaserver</h1>
+
+    <p>Please enjoy one of the following tracks:</p>
 
     <p>
-        <audio controls>
-            <source src="./{{ .ID }}/data" type="{{ .MIMEType }}" />
-            {{ .Name }}
-        </audio>
+        <ul>
+            {{ range . }}
+                <li><a href="tracks/{{.ID}}">{{ .Name }}</a></li>
+            {{ end }}
+        </ul>
     </p>
 </body>
 </html>

@@ -9,12 +9,13 @@
 <body>
     <h1>Welcome to Minimediaserver</h1>
 
-    <p>Please enjoy::</p>
+    <p>Please enjoy one of the following playlists:</p>
 
     <p>
         <ul>
-            <li><a href="playlists/">Playlists</a></li>
-            <li><a href="tracks/">All tracks</a></li>
+            {{ range . }}
+                <li><a href="./{{.ID}}">{{ .Name }}</a></li>
+            {{ end }}
         </ul>
     </p>
 </body>

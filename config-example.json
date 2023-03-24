@@ -1,0 +1,14 @@
+{
+	"host": "*",
+	"port":	"1337",
+
+	"storageServices": [
+		{
+			"type": "nullStorage"
+		},
+		{
+			"type": "diskStorage",
+			"path": "$HOME/Music/cds"
+		}
+	]
+}

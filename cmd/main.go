@@ -5,9 +5,6 @@ import (
 	"os"
 
 	"github.com/labstack/echo/v4/middleware"
-
-	"github.com/richdawe/minimediaserver/services/catalog"
-	"github.com/richdawe/minimediaserver/services/storage"
 )
 
 func handleErr(err error) {
@@ -18,17 +15,10 @@ func handleErr(err error) {
 }
 
 func main() {
-	catalogService, err := catalog.New()
+	config, err := loadConfig()
 	handleErr(err)
 
-	// TODO: need a config file for configuring storage backends
-	nullStorage, err := storage.NewNullStorage()
-	handleErr(err)
-	err = catalogService.AddStorage(nullStorage)
-	handleErr(err)
-	diskStorage, err := storage.NewDiskStorage("test/services/storage/diskstorage")
-	handleErr(err)
-	err = catalogService.AddStorage(diskStorage)
+	catalogService, err := buildCatalog(config)
 	handleErr(err)
 
 	e, err := setupEndpoints(catalogService)
@@ -37,7 +27,7 @@ func main() {
 	// TODO: need a config file for specifying HTTP server options
 	e.Use(middleware.Timeout())
 	e.Use(middleware.Logger())
-	e.Logger.Fatal(e.Start(":1323"))
+	e.Logger.Fatal(e.Start(config.Addr))
 
 	fmt.Println("DONE")
 }

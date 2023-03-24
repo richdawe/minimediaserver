@@ -18,11 +18,13 @@ test:
 
 # Requires 'reflex' from https://github.com/cespare/reflex
 # to be in the path.
+WATCHREGEX = '(\.go|\.tmpl\.html|\.mod|\.sum)$$'
+
 watch:
-	reflex -r '(\.go|\.tmpl\.html)$$' -s -- make run
+	reflex -r $(WATCHREGEX) -s -- make run
 
 watchtest:
-	reflex -r '(\.go|\.tmpl\.html)$$' -s -- make test
+	reflex -r $(WATCHREGEX) -s -- make test
 
 clean:
 	rm -fv bin/minimediaserver

@@ -12,10 +12,9 @@
     <p>
         <ul>
             {{ range $index, $element := .Tracks }}
-                <p>{{ $index }}:
+                <p>{{ $index }}: {{ .Name }}:
                     <audio controls>
                         <source src="/tracks/{{ $element.ID }}/data" type="{{ $element.MIMEType }}" />
-                        {{ .Name }}
                     </audio>
                 </p>
             {{ end }}

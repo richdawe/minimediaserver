@@ -30,8 +30,11 @@
             nameLabel.textContent = track["name"];
             audioPlayerSource.src = track["source"];
             audioPlayerSource.type = track["mimeType"];
+            const paused = audioPlayer.paused;
             audioPlayer.load();
-            audioPlayer.play(); // TODO: base on current state
+            if (paused !== true) {
+                audioPlayer.play();
+            }
         }
 
         document.addEventListener("DOMContentLoaded", (event) => {
@@ -75,6 +78,21 @@
                 }
                 track = tracks[trackNumber];
                 changeTrack(audioPlayer, audioPlayerSource, nameLabel, track);
+            });
+
+            // Automatically move onto next track when one finishes.
+            // Stop if this was the last track.
+            audioPlayer.addEventListener("ended", (event) => {
+                if (trackNumber + 1 >= tracks.length) {
+                    return;
+                }
+
+                trackNumber++;
+                track = tracks[trackNumber];
+                changeTrack(audioPlayer, audioPlayerSource, nameLabel, track);
+                // When it ends, it seems to go into the paused state.
+                // But we know it was playing, otherwise the track would not have ended!
+                audioPlayer.play();
             });
         });
     </script>

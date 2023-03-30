@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"io"
 	"net/http"
+	"path/filepath"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -13,7 +15,10 @@ import (
 )
 
 //go:embed templates/*
-var content embed.FS
+var templatesContent embed.FS
+
+//go:embed static/*
+var staticContent embed.FS
 
 type TemplateRenderer struct {
 	templates *template.Template
@@ -78,7 +83,7 @@ func getPlaylistsByID(c echo.Context, catalogService *catalog.CatalogService) er
 }
 
 func setupEndpoints(catalogService *catalog.CatalogService) (*echo.Echo, error) {
-	t, err := template.ParseFS(content, "templates/*.tmpl.html")
+	t, err := template.ParseFS(templatesContent, "templates/*.tmpl.html")
 	if err != nil {
 		return nil, err
 	}
@@ -108,6 +113,28 @@ func setupEndpoints(catalogService *catalog.CatalogService) (*echo.Echo, error) 
 	})
 	e.GET("/playlists/:id", func(c echo.Context) error {
 		return getPlaylistsByID(c, catalogService)
+	})
+	e.GET("/static/:filename", func(c echo.Context) error {
+		filename := c.Param("filename")
+		path := filepath.Join("static", filename)
+		data, err := staticContent.ReadFile(path)
+		if err != nil {
+			// TODO: return appropriate error for e.g.: file that can't be found
+			return err
+		}
+
+		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
+		mimeType := "application/binary"
+		switch {
+		case strings.HasSuffix(filename, ".css"):
+			mimeType = "text/css"
+		case strings.HasSuffix(filename, ".html"):
+			mimeType = "text/html"
+		case strings.HasSuffix(filename, ".js"):
+			mimeType = "text/javascript"
+		}
+
+		return c.Blob(http.StatusOK, mimeType, data)
 	})
 	return e, nil
 }

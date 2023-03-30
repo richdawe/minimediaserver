@@ -23,5 +23,9 @@ func TestEndpoints(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, e) // TODO: remove when something more interesting is happening
 
-	// TODO: exercise HTTP endpoints
+	// TODO: exercise more HTTP endpoints
+
+	t.Run("StaticEndpoints", func(t *testing.T) {
+		// TODO: starting point at https://echo.labstack.com/guide/testing/
+	})
 }

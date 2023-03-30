@@ -1,0 +1,13 @@
+button {
+    width: 100px;
+    height: 33px;
+}
+
+.active-track {
+    background-color: lightblue;
+    cursor: pointer;
+}
+
+.clickable-track {
+    cursor: pointer;
+}

@@ -18,7 +18,7 @@ test:
 
 # Requires 'reflex' from https://github.com/cespare/reflex
 # to be in the path.
-WATCHREGEX = '(\.go|\.tmpl\.html|\.mod|\.sum)$$'
+WATCHREGEX = '(\.go|\.tmpl\.html|\.js|\.css|\.mod|\.sum)$$'
 
 watch:
 	reflex -r $(WATCHREGEX) -s -- make run

@@ -7,5 +7,7 @@
 
  * HTTP cache headers on returned data? Not really that useful on local network?
 
+ * Document hotkeys somewhere
+
  * Coverage
  * Function documentation

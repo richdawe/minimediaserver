@@ -1,14 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        button {
+            width: 100px;
+            height: 33px;
+        }
+
+        .active-track {
+            background-color: lightblue;
+            cursor: pointer;
+        }
+
+        .clickable-track {
+            cursor: pointer;
+        }
+    </style>
+
     <title>{{ .Name }} :: Minimediaserver</title>
 </head>
+
 <body>
     <!--
         https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector
+        https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event
+        https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/keyCode
         https://developer.mozilla.org/en-US/docs/Web/API/Element/click_event
         https://developer.mozilla.org/en-US/docs/Web/HTML/Element/audio
         https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement
@@ -24,12 +45,37 @@
             {{ end }}
         ];
         let trackNumber = 0;
-        let track = tracks[trackNumber];
 
-        function changeTrack(audioPlayer, audioPlayerSource, nameLabel, track) {
+        function pauseOrPlay() {
+            const audioPlayer = document.querySelector("#player");
+            const playButton = document.querySelector("#play");
+
+            if (audioPlayer.paused === true) {
+                playButton.textContent = "Pause";
+                audioPlayer.play();
+            } else {
+                playButton.textContent = "Play";
+                audioPlayer.pause();
+            }
+        }
+
+        function changeTrack(n, oldN) {
+            const track = tracks[n];
+
+            const audioPlayer = document.querySelector("#player");
+            const audioPlayerSource = document.querySelector("#playersource");
+            const nameLabel = document.querySelector("#name");
+
             nameLabel.textContent = track["name"];
             audioPlayerSource.src = track["source"];
             audioPlayerSource.type = track["mimeType"];
+
+            const oldTrackElement = document.querySelector("#track" + oldN)
+            const newTrackElement = document.querySelector("#track" + n)
+
+            newTrackElement.className = "active-track"
+            oldTrackElement.className = "clickable-track"
+
             const paused = audioPlayer.paused;
             audioPlayer.load();
             if (paused !== true) {
@@ -37,22 +83,36 @@
             }
         }
 
+        function previousTrack() {
+            let oldTrackNumber = trackNumber;
+
+            if (trackNumber === 0) {
+                trackNumber = tracks.length - 1;
+            } else {
+                trackNumber--;
+            }
+            changeTrack(trackNumber, oldTrackNumber);
+        }
+
+        function nextTrack() {
+            let oldTrackNumber = trackNumber;
+
+            trackNumber++;
+            if (trackNumber >= tracks.length) {
+                trackNumber = 0;
+            }
+            changeTrack(trackNumber, oldTrackNumber);
+        }
+
         document.addEventListener("DOMContentLoaded", (event) => {
             const previousButton = document.querySelector("#previous");
             const playButton = document.querySelector("#play");
             const nextButton = document.querySelector("#next");
-            const nameLabel = document.querySelector("#name");
             const audioPlayer = document.querySelector("#player");
-            const audioPlayerSource = document.querySelector("#playersource");
 
+            // Play/pause via audio player or button
             playButton.addEventListener("click", (event) => {
-                if (playButton.textContent === "Play") {
-                    playButton.textContent = "Pause";
-                    audioPlayer.play();
-                } else {
-                    playButton.textContent = "Play";
-                    audioPlayer.pause();
-                }
+                pauseOrPlay();
             });
             audioPlayer.addEventListener("pause", (event) => {
                 playButton.textContent = "Play";
@@ -61,23 +121,13 @@
                 playButton.textContent = "Pause";
             });
 
+            // Buttons to move back/forward
             previousButton.addEventListener("click", (event) => {
-                if (trackNumber === 0) {
-                    trackNumber = tracks.length - 1;
-                } else {
-                    trackNumber--;
-                }
-                track = tracks[trackNumber];
-                changeTrack(audioPlayer, audioPlayerSource, nameLabel, track);
+                previousTrack();
             });
 
             nextButton.addEventListener("click", (event) => {
-                trackNumber++;
-                if (trackNumber >= tracks.length) {
-                    trackNumber = 0;
-                }
-                track = tracks[trackNumber];
-                changeTrack(audioPlayer, audioPlayerSource, nameLabel, track);
+                nextTrack();
             });
 
             // Automatically move onto next track when one finishes.
@@ -87,12 +137,41 @@
                     return;
                 }
 
-                trackNumber++;
-                track = tracks[trackNumber];
-                changeTrack(audioPlayer, audioPlayerSource, nameLabel, track);
+                nextTrack();
                 // When it ends, it seems to go into the paused state.
                 // But we know it was playing, otherwise the track would not have ended!
                 audioPlayer.play();
+            });
+
+            // Jump to a track if its name is clicked.
+            for (let i = 0; i < tracks.length; ++i) {
+                const trackElement = document.querySelector("#track" + i);
+                trackElement.addEventListener("click", (event) => {
+                    let oldTrackNumber = trackNumber;
+                    trackNumber = i;
+                    changeTrack(trackNumber, oldTrackNumber);
+                });
+            }
+
+            // Hotkey: Space to play/pause, , for previous, . for next
+            // TODO: this doesn't work if the pointer is over Previous/Next -
+            // in that case it will press the button.
+            document.addEventListener("keyup", (event) => {
+                if (event.isComposing || event.keyCode === 229) {
+                    return;
+                }
+                if (event.keyCode == 32) { // space
+                    pauseOrPlay();
+                    return;
+                }
+                if (event.keyCode == 188) { // ,
+                    previousTrack();
+                    return;
+                }
+                if (event.keyCode == 190) { // .
+                    nextTrack();
+                    return;
+                }
             });
         });
     </script>
@@ -106,7 +185,7 @@
             </audio>
         </p>
         <p>
-            Playing: <div id="name">{{ $firstItem.Name }}</div>
+            Playing: <span id="name">{{ $firstItem.Name }}</span>
         </p>
     {{ end }}
     <p>
@@ -115,22 +194,20 @@
         <button id="next">Next</button>
     </p>
 
-<!-- Prototyping (TODO: remove) -->
-<!--
-    <hr/>
-
     <p>
-        <ul>
+        <table>
             {{ range $index, $element := .Tracks }}
-                <p>{{ $index }}: {{ .Name }}:
-                    <audio id="track{{ $index }}" controls preload="none">
-                        <source src="/tracks/{{ $element.ID }}/data" type="{{ $element.MIMEType }}" />
-                    </audio>
-                </p>
+                <tr>
+                    <td id="track{{ $index }}"
+                    {{ if eq $index 0 }}
+                      class="active-track"
+                    {{ else }}
+                      class="clickable-track"
+                    {{ end }}
+                      >{{ .Name }}</td>
             {{ end }}
-        </ul>
+        </table>
     </p>
--->
 
 </body>
 </html>

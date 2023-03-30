@@ -97,6 +97,7 @@ func (ds *DiskStorage) buildTracks() (map[string]Track, map[string]Playlist) {
 			return nil
 		}
 		location := filepath.Join(ds.BasePath, path)
+		trackUUID := locationToUUIDString(location)
 
 		// Ignore some unknown MIME types
 		mimeType := getMIMEType(d.Name())
@@ -107,7 +108,7 @@ func (ds *DiskStorage) buildTracks() (map[string]Track, map[string]Playlist) {
 
 		track := Track{
 			Name:     d.Name(),
-			ID:       uuid.New().String(),
+			ID:       trackUUID,
 			Location: location,
 			MIMEType: mimeType,
 		}
@@ -118,6 +119,7 @@ func (ds *DiskStorage) buildTracks() (map[string]Track, map[string]Playlist) {
 		// with everything encoded in one filename. Could use with the playlist building
 		// strategy being pluggable.
 		playlistLocation := findPlaylistLocation(location)
+		playlistUUID := locationToUUIDString(playlistLocation)
 
 		playlistID, ok := playlistsByLocation[playlistLocation]
 		if !ok {
@@ -126,7 +128,7 @@ func (ds *DiskStorage) buildTracks() (map[string]Track, map[string]Playlist) {
 
 			playlist := Playlist{
 				Name:     playlistName,
-				ID:       uuid.New().String(),
+				ID:       playlistUUID,
 				Location: playlistLocation,
 				Tracks:   make([]Track, 0, 1),
 			}

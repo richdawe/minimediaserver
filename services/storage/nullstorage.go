@@ -28,14 +28,15 @@ func (ns *NullStorage) FindTracks() ([]Track, []Playlist) {
 		return ns.Tracks, ns.Playlists
 	}
 
-	tracks := make([]Track, 0, 1)
+	trackLocation := "/null/" + exampleFilename
+	trackUUID := locationToUUIDString(trackLocation)
 	track := Track{
 		Name:     "Example",
-		ID:       uuid.New().String(),
-		Location: "/null/" + exampleFilename,
+		ID:       trackUUID,
+		Location: trackLocation,
 		MIMEType: "audio/ogg",
 	}
-	tracks = append(tracks, track)
+	tracks := []Track{track}
 
 	playlist := Playlist{
 		Name:     "null-playlist",

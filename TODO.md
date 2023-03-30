@@ -6,5 +6,7 @@
 
  * Structured logging using the standard log package or something from https://blog.logrocket.com/5-structured-logging-packages-for-go/ ?
 
+ * HTTP cache headers on returned data? Not really that useful on local network?
+
  * Coverage
  * Function documentation

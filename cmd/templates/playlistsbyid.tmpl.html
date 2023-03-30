@@ -7,18 +7,112 @@
     <title>{{ .Name }} :: Minimediaserver</title>
 </head>
 <body>
+    <!--
+        https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector
+        https://developer.mozilla.org/en-US/docs/Web/API/Element/click_event
+        https://developer.mozilla.org/en-US/docs/Web/HTML/Element/audio
+        https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement
+    -->
+    <script>
+        const tracks = [
+            {{ range $index, $element := .Tracks }}
+                {
+                    name: "{{ $element.Name }}",
+                    source: "/tracks/{{ $element.ID }}/data",
+                    mimeType: "{{ $element.MIMEType }}",
+                },
+            {{ end }}
+        ];
+        let trackNumber = 0;
+        let track = tracks[trackNumber];
+
+        function changeTrack(audioPlayer, audioPlayerSource, nameLabel, track) {
+            nameLabel.textContent = track["name"];
+            audioPlayerSource.src = track["source"];
+            audioPlayerSource.type = track["mimeType"];
+            audioPlayer.load();
+            audioPlayer.play(); // TODO: base on current state
+        }
+
+        document.addEventListener("DOMContentLoaded", (event) => {
+            const previousButton = document.querySelector("#previous");
+            const playButton = document.querySelector("#play");
+            const nextButton = document.querySelector("#next");
+            const nameLabel = document.querySelector("#name");
+            const audioPlayer = document.querySelector("#player");
+            const audioPlayerSource = document.querySelector("#playersource");
+
+            playButton.addEventListener("click", (event) => {
+                if (playButton.textContent === "Play") {
+                    playButton.textContent = "Pause";
+                    audioPlayer.play();
+                } else {
+                    playButton.textContent = "Play";
+                    audioPlayer.pause();
+                }
+            });
+            audioPlayer.addEventListener("pause", (event) => {
+                playButton.textContent = "Play";
+            });
+            audioPlayer.addEventListener("play", (event) => {
+                playButton.textContent = "Pause";
+            });
+
+            previousButton.addEventListener("click", (event) => {
+                if (trackNumber === 0) {
+                    trackNumber = tracks.length - 1;
+                } else {
+                    trackNumber--;
+                }
+                track = tracks[trackNumber];
+                changeTrack(audioPlayer, audioPlayerSource, nameLabel, track);
+            });
+
+            nextButton.addEventListener("click", (event) => {
+                trackNumber++;
+                if (trackNumber >= tracks.length) {
+                    trackNumber = 0;
+                }
+                track = tracks[trackNumber];
+                changeTrack(audioPlayer, audioPlayerSource, nameLabel, track);
+            });
+        });
+    </script>
+
     <h1>Listen to {{ .Name }}</h1>
+
+    {{ with $firstItem := index .Tracks 0 }}
+        <p>
+            <audio id="player" controls preload="none">
+                <source id="playersource" src="/tracks/{{ $firstItem.ID }}/data" type="{{ $firstItem.MIMEType }}" />
+            </audio>
+        </p>
+        <p>
+            Playing: <div id="name">{{ $firstItem.Name }}</div>
+        </p>
+    {{ end }}
+    <p>
+        <button id="previous">Prev</button>
+        <button id="play">Play</button>
+        <button id="next">Next</button>
+    </p>
+
+<!-- Prototyping (TODO: remove) -->
+<!--
+    <hr/>
 
     <p>
         <ul>
             {{ range $index, $element := .Tracks }}
                 <p>{{ $index }}: {{ .Name }}:
-                    <audio controls>
+                    <audio id="track{{ $index }}" controls preload="none">
                         <source src="/tracks/{{ $element.ID }}/data" type="{{ $element.MIMEType }}" />
                     </audio>
                 </p>
             {{ end }}
         </ul>
     </p>
+-->
+
 </body>
 </html>

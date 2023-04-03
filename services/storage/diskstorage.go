@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/google/uuid"
 )
@@ -40,33 +39,6 @@ func (ds *DiskStorage) FindTracks() ([]Track, []Playlist) {
 		ds.sortedTracks, ds.sortedPlaylists = ds.buildSortedTracks()
 	}
 	return ds.sortedTracks, ds.sortedPlaylists
-}
-
-func getMIMEType(filename string) string {
-	var mimeType string
-
-	filename = strings.ToLower(filename)
-	switch {
-	case strings.HasSuffix(filename, ".mp3"):
-		mimeType = "audio/mp3"
-	case strings.HasSuffix(filename, ".ogg"):
-		mimeType = "audio/ogg"
-	case strings.HasSuffix(filename, ".flac"):
-		mimeType = "audio/flac"
-	}
-
-	if mimeType == "" {
-		mimeType = "application/binary"
-	}
-	return mimeType
-}
-
-func ignoreMIMEType(mimeType string) bool {
-	switch mimeType {
-	case "application/binary":
-		return true
-	}
-	return false
 }
 
 // TODO: test coverage for findPlaylist*()

@@ -9,6 +9,10 @@
 		{
 			"type": "diskStorage",
 			"path": "$HOME/Music/cds"
+		},
+		{
+			"type": "diskStorage",
+			"path": "$HOME/Music/iTunes/iTunes Media/Music"
 		}
 	]
 }

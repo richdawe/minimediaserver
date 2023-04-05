@@ -18,7 +18,8 @@ func TestNullStorage(t *testing.T) {
 	})
 
 	t.Run("FindTracks", func(t *testing.T) {
-		tracks, playlists := s.FindTracks()
+		tracks, playlists, err := s.FindTracks()
+		require.NoError(t, err)
 		assert.NotNil(t, tracks)
 		assert.Len(t, tracks, 1)
 
@@ -48,13 +49,15 @@ func TestNullStorage(t *testing.T) {
 	t.Run("StableIDs", func(t *testing.T) {
 		// Verify that the track ID and playlist ID are stable across
 		// calls to FindTracks.
-		tracks, playlists := s.FindTracks()
+		tracks, playlists, err := s.FindTracks()
+		require.NoError(t, err)
 		require.NotNil(t, tracks)
 		require.Equal(t, len(tracks), 1)
 		require.NotNil(t, playlists)
 		require.Equal(t, len(playlists), 1)
 
-		tracks2, playlists2 := s.FindTracks()
+		tracks2, playlists2, err := s.FindTracks()
+		require.NoError(t, err)
 		require.NotNil(t, tracks)
 		require.Equal(t, len(tracks), 1)
 		require.NotNil(t, playlists)
@@ -65,7 +68,8 @@ func TestNullStorage(t *testing.T) {
 	})
 
 	t.Run("ReadTrack", func(t *testing.T) {
-		tracks, _ := s.FindTracks()
+		tracks, _, err := s.FindTracks()
+		require.NoError(t, err)
 		require.NotNil(t, tracks)
 		r, err := s.ReadTrack(tracks[0].ID)
 		require.NoError(t, err)
@@ -74,5 +78,10 @@ func TestNullStorage(t *testing.T) {
 		require.NoError(t, err)
 		dataLen := len(data)
 		require.Greater(t, dataLen, 0, "data returned")
+	})
+
+	t.Run("ReadTrackNotFound", func(t *testing.T) {
+		_, err := s.ReadTrack("nope")
+		require.Error(t, err)
 	})
 }

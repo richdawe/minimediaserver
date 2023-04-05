@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -31,14 +30,19 @@ func (ds *DiskStorage) GetID() string {
 
 // Find the tracks in this storage, and return the tracks
 // in a stable order.
-func (ds *DiskStorage) FindTracks() ([]Track, []Playlist) {
+func (ds *DiskStorage) FindTracks() ([]Track, []Playlist, error) {
+	var err error
+
 	if ds.tracksByID == nil {
-		ds.tracksByID, ds.playlistsByID = ds.buildTracks()
+		ds.tracksByID, ds.playlistsByID, err = ds.buildTracks()
+	}
+	if err != nil {
+		return nil, nil, err
 	}
 	if ds.sortedTracks == nil {
 		ds.sortedTracks, ds.sortedPlaylists = ds.buildSortedTracks()
 	}
-	return ds.sortedTracks, ds.sortedPlaylists
+	return ds.sortedTracks, ds.sortedPlaylists, nil
 }
 
 // TODO: test coverage for findPlaylist*()
@@ -54,16 +58,18 @@ func findPlaylistArtistAlbum(location string) (string, string) {
 	return artist, album
 }
 
-func (ds *DiskStorage) buildTracks() (map[string]Track, map[string]Playlist) {
+func (ds *DiskStorage) buildTracks() (map[string]Track, map[string]Playlist, error) {
 	tracksByID := make(map[string]Track, 0)
 	playlistsByID := make(map[string]Playlist, 0)
 	playlistsByLocation := make(map[string]string, 0) // value is playlist ID
 
 	fileSystem := os.DirFS(ds.BasePath)
+	var walkErr error
 
 	fs.WalkDir(fileSystem, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			log.Fatal(err)
+			walkErr = err
+			return nil
 		}
 		if d.IsDir() {
 			return nil
@@ -116,7 +122,7 @@ func (ds *DiskStorage) buildTracks() (map[string]Track, map[string]Playlist) {
 		return nil
 	})
 
-	return tracksByID, playlistsByID
+	return tracksByID, playlistsByID, walkErr
 }
 
 func (ds *DiskStorage) buildSortedTracks() ([]Track, []Playlist) {
@@ -187,9 +193,17 @@ func (ds *DiskStorage) ReadTrack(id string) (io.Reader, error) {
 	return bytes.NewReader(data), nil
 }
 
-func NewDiskStorage(Path string) (*DiskStorage, error) {
+func NewDiskStorage(path string) (*DiskStorage, error) {
+	fileinfo, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if !fileinfo.IsDir() {
+		return nil, fmt.Errorf("%s is not a directory", path)
+	}
+
 	return &DiskStorage{
 		ID:       uuid.New().String(),
-		BasePath: Path,
+		BasePath: path,
 	}, nil
 }

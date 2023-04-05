@@ -24,7 +24,10 @@ func (cs *CatalogService) AddStorage(ss storage.StorageService) error {
 	ssid := ss.GetID()
 	cs.storageByID[ssid] = ss
 
-	storageTracks, storagePlaylists := ss.FindTracks()
+	storageTracks, storagePlaylists, err := ss.FindTracks()
+	if err != nil {
+		return err
+	}
 
 	cs.tracksByStorageServiceID[ssid] = storageTracks
 	for _, storageTrack := range storageTracks {

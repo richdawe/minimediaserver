@@ -10,22 +10,24 @@ import (
 	"github.com/spf13/viper"
 )
 
-type StorageService struct {
+type StorageServiceConfig struct {
 	Type string `mapstructure:"type"`
 	Path string `mapstructure:"path"`
 }
 
 type Config struct {
 	Addr            string // Server IP + port
-	StorageServices []StorageService
+	StorageServices []StorageServiceConfig
 }
 
-func loadConfig() (Config, error) {
+func setLoadConfigOptions() {
 	viper.SetConfigName(".minimediaserver")
 	viper.SetConfigType("json")
 	viper.AddConfigPath("$HOME")
 	viper.AddConfigPath(".")
+}
 
+func loadConfig() (Config, error) {
 	// Set some defaults
 	viper.SetDefault("host", "127.0.0.1")
 	viper.SetDefault("port", "1323")
@@ -64,7 +66,7 @@ func buildCatalog(config Config) (*catalog.CatalogService, error) {
 
 	// Always provide at least one storage service.
 	if len(config.StorageServices) == 0 {
-		config.StorageServices = []StorageService{
+		config.StorageServices = []StorageServiceConfig{
 			{
 				Type: "nullStorage",
 			},

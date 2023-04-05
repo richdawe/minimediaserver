@@ -2,6 +2,8 @@ package storage
 
 import (
 	"io"
+	"io/fs"
+	"syscall"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,7 +20,8 @@ func TestDiskStorage(t *testing.T) {
 	})
 
 	t.Run("FindTracks", func(t *testing.T) {
-		tracks, playlists := s.FindTracks()
+		tracks, playlists, err := s.FindTracks()
+		require.NoError(t, err)
 		assert.NotNil(t, tracks)
 		assert.Equal(t, len(tracks), 3)
 
@@ -81,13 +84,15 @@ func TestDiskStorage(t *testing.T) {
 	t.Run("StableIDs", func(t *testing.T) {
 		// Verify that the track ID and playlist ID are stable across
 		// calls to FindTracks.
-		tracks, playlists := s.FindTracks()
+		tracks, playlists, err := s.FindTracks()
+		require.NoError(t, err)
 		require.NotNil(t, tracks)
 		require.Equal(t, len(tracks), 3)
 		require.NotNil(t, playlists)
 		require.Equal(t, len(playlists), 2)
 
-		tracks2, playlists2 := s.FindTracks()
+		tracks2, playlists2, err := s.FindTracks()
+		require.NoError(t, err)
 		require.NotNil(t, tracks)
 		require.Equal(t, len(tracks), 3)
 		require.NotNil(t, playlists)
@@ -98,7 +103,8 @@ func TestDiskStorage(t *testing.T) {
 	})
 
 	t.Run("ReadTrack", func(t *testing.T) {
-		tracks, _ := s.FindTracks()
+		tracks, _, err := s.FindTracks()
+		require.NoError(t, err)
 		require.NotNil(t, tracks)
 		assert.Equal(t, len(tracks), 3)
 
@@ -119,5 +125,21 @@ func TestDiskStorage(t *testing.T) {
 			980027, // Music/cds/Artist/Album1/track2-example.flac
 			104793, // Music/cds/Artist/Album2/track1-example.ogg
 		}, dataLens)
+	})
+
+	t.Run("ReadTrackNotFound", func(t *testing.T) {
+		_, err := s.ReadTrack("nope")
+		require.Error(t, err)
+	})
+}
+
+func TestDiskStorageFailures(t *testing.T) {
+	t.Run("BadPath", func(t *testing.T) {
+		s, err := NewDiskStorage("./__DOES_NOT_EXIST__")
+		require.Error(t, err)
+		var pErr *fs.PathError
+		require.ErrorAs(t, err, &pErr)
+		assert.Equal(t, pErr.Err, syscall.ENOENT)
+		require.Nil(t, s)
 	})
 }

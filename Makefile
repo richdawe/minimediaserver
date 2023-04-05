@@ -14,7 +14,12 @@ test:
 	go test -v ./...
 	@echo
 
-# TODO: code coverage
+# TODO: Add -race -covermode=atomic later?
+# E.g.: when fetching tracks from multiple clients?
+.PHONE:	coverage
+coverage:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
 
 # Requires 'reflex' from https://github.com/cespare/reflex
 # to be in the path.
@@ -25,6 +30,9 @@ watch:
 
 watchtest:
 	reflex -r $(WATCHREGEX) -s -- make test
+
+watchcoverage:
+	reflex -r $(WATCHREGEX) -s -- make coverage
 
 clean:
 	rm -fv bin/minimediaserver

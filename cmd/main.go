@@ -15,6 +15,7 @@ func handleErr(err error) {
 }
 
 func main() {
+	setLoadConfigOptions()
 	config, err := loadConfig()
 	handleErr(err)
 

@@ -50,7 +50,11 @@ func loadConfig() (Config, error) {
 	port := viper.GetString("port")
 	config.Addr = host + ":" + port
 
-	viper.UnmarshalKey("storageServices", &config.StorageServices)
+	err := viper.UnmarshalKey("storageServices", &config.StorageServices)
+	if err != nil {
+		return Config{}, err
+	}
+
 	for _, css := range config.StorageServices {
 		fmt.Printf("%+v\n", css)
 	}

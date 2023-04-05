@@ -64,12 +64,10 @@ func (ds *DiskStorage) buildTracks() (map[string]Track, map[string]Playlist, err
 	playlistsByLocation := make(map[string]string, 0) // value is playlist ID
 
 	fileSystem := os.DirFS(ds.BasePath)
-	var walkErr error
 
-	fs.WalkDir(fileSystem, ".", func(path string, d fs.DirEntry, err error) error {
+	walkErr := fs.WalkDir(fileSystem, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			walkErr = err
-			return nil
+			return err
 		}
 		if d.IsDir() {
 			return nil

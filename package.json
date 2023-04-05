@@ -1,0 +1,11 @@
+{
+  "name": "minimediaserver",
+  "homepage": "https://github.com/richdawe/minimediaserver",
+  "private": true,
+
+  "dependencies": {},
+
+  "devDependencies": {
+    "eslint": "^8.37.0"
+  }
+}

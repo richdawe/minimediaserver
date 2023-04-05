@@ -14,6 +14,18 @@ test:
 	go test -v ./...
 	@echo
 
+.PHONY:	lint
+lint:	lint-go lint-js
+
+.PHONY: lint-go
+lint-go:
+	sudo docker run -t --rm -v $$(pwd):/app -w /app golangci/golangci-lint:v1.52.2 golangci-lint run -v
+
+.PHONY:	lint-js
+lint-js:
+	npx eslint cmd/static
+	@echo
+
 # TODO: Add -race -covermode=atomic later?
 # E.g.: when fetching tracks from multiple clients?
 .PHONE:	coverage

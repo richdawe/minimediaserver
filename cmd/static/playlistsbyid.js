@@ -68,6 +68,8 @@ function nextTrack() {
     changeTrack(trackNumber, oldTrackNumber);
 }
 
+// initAudioPlayer is called from the HTML generated from playlistsbyid.tmpl.html
+// eslint-disable-next-line no-unused-vars
 function initAudioPlayer(availableTracks, n) {
     // Initial state
     tracks = availableTracks;
@@ -81,28 +83,28 @@ function initAudioPlayer(availableTracks, n) {
     const audioPlayer = document.querySelector("#player");
 
     // Play/pause via audio player or button
-    playButton.addEventListener("click", (event) => {
+    playButton.addEventListener("click", () => {
         pauseOrPlay();
     });
-    audioPlayer.addEventListener("pause", (event) => {
+    audioPlayer.addEventListener("pause", () => {
         playButton.textContent = "Play";
     });
-    audioPlayer.addEventListener("play", (event) => {
+    audioPlayer.addEventListener("play", () => {
         playButton.textContent = "Pause";
     });
 
     // Buttons to move back/forward
-    previousButton.addEventListener("click", (event) => {
+    previousButton.addEventListener("click", () => {
         previousTrack();
     });
 
-    nextButton.addEventListener("click", (event) => {
+    nextButton.addEventListener("click", () => {
         nextTrack();
     });
 
     // Automatically move onto next track when one finishes.
     // Stop if this was the last track.
-    audioPlayer.addEventListener("ended", (event) => {
+    audioPlayer.addEventListener("ended", () => {
         if (trackNumber + 1 >= tracks.length) {
             return;
         }
@@ -116,7 +118,7 @@ function initAudioPlayer(availableTracks, n) {
     // Jump to a track if its name is clicked.
     for (let i = 0; i < tracks.length; ++i) {
         const trackElement = document.querySelector("#track" + i);
-        trackElement.addEventListener("click", (event) => {
+        trackElement.addEventListener("click", () => {
             let oldTrackNumber = trackNumber;
             trackNumber = i;
             changeTrack(trackNumber, oldTrackNumber);

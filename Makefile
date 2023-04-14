@@ -4,6 +4,15 @@ default:	build
 build:
 	go build -v -o bin/minimediaserver ./cmd
 
+# Cross-compile
+.PHONY:	build-cross
+build-cross:	build build-macos
+
+# https://www.digitalocean.com/community/tutorials/how-to-build-go-executables-for-multiple-platforms-on-ubuntu-16-04#step-4-building-executables-for-different-architectures
+.PHONY: build-macos
+build-macos:
+	GOOS=darwin GOARCH=amd64 go build -v -o bin/minimediaserver.macos-amd64 ./cmd
+
 .PHONY: run
 run:
 	go run ./cmd
@@ -47,4 +56,4 @@ watchcoverage:
 	reflex -r $(WATCHREGEX) -s -- make coverage
 
 clean:
-	rm -fv bin/minimediaserver
+	rm -fv bin/minimediaserver*

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -62,7 +63,7 @@ func getTracksByIDData(c echo.Context, catalogService *catalog.CatalogService) e
 		// TODO: return appropriate error for e.g.: track that can't be read
 		return err
 	}
-	return c.Stream(http.StatusOK, "audio/flac", r) // TODO: get data type from track
+	return c.Stream(http.StatusOK, track.MIMEType, r)
 }
 
 func getPlaylists(c echo.Context, catalogService *catalog.CatalogService) error {
@@ -95,6 +96,10 @@ func setupEndpoints(catalogService *catalog.CatalogService) (*echo.Echo, error) 
 	e.Renderer = tr
 
 	e.Pre(middleware.RemoveTrailingSlash())
+
+	// Don't wait process requests indefinitely.
+	e.Server.ReadTimeout = time.Duration(60 * time.Second)
+	e.Server.WriteTimeout = time.Duration(60 * time.Second)
 
 	e.GET("/", func(c echo.Context) error {
 		return getRoot(c, catalogService)

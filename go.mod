@@ -3,7 +3,10 @@ module github.com/richdawe/minimediaserver
 go 1.20
 
 require (
+	github.com/go-flac/flacvorbis v0.1.0
+	github.com/go-flac/go-flac v0.3.1
 	github.com/google/uuid v1.3.0
+	github.com/jfreymuth/oggvorbis v1.0.5
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.2
@@ -14,6 +17,7 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/jfreymuth/vorbis v1.0.2 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect

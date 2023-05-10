@@ -11,7 +11,7 @@ import (
 )
 
 func TestDiskStorage(t *testing.T) {
-	s, err := NewDiskStorage("../../test/services/storage/diskstorage/Music/cds")
+	s, err := NewDiskStorage("../../testdata/services/storage/diskstorage/Music/cds")
 	require.NoError(t, err)
 
 	t.Run("GetID", func(t *testing.T) {
@@ -35,22 +35,25 @@ func TestDiskStorage(t *testing.T) {
 
 		assert.Equal(t, []Track{
 			{
-				Name:     "track1-example.ogg",
+				Name:     "ALBUM1_TRACK1_EXAMPLE",
 				ID:       trackIDs[0],
-				Location: "../../test/services/storage/diskstorage/Music/cds/Artist/Album1/track1-example.ogg",
+				Location: "../../testdata/services/storage/diskstorage/Music/cds/Artist/Album1/track1-example.ogg",
 				MIMEType: "audio/ogg",
+				DataLen:  105283,
 			},
 			{
 				Name:     "track2-example.flac",
 				ID:       trackIDs[1],
-				Location: "../../test/services/storage/diskstorage/Music/cds/Artist/Album1/track2-example.flac",
+				Location: "../../testdata/services/storage/diskstorage/Music/cds/Artist/Album1/track2-example.flac",
 				MIMEType: "audio/flac",
+				DataLen:  980027,
 			},
 			{
-				Name:     "track1-example.ogg",
+				Name:     "ALBUM2_TRACK1_EXAMPLE",
 				ID:       trackIDs[2],
-				Location: "../../test/services/storage/diskstorage/Music/cds/Artist/Album2/track1-example.ogg",
+				Location: "../../testdata/services/storage/diskstorage/Music/cds/Artist/Album2/track1-example.ogg",
 				MIMEType: "audio/ogg",
+				DataLen:  105283,
 			},
 		}, tracks)
 
@@ -69,13 +72,13 @@ func TestDiskStorage(t *testing.T) {
 			{
 				Name:     "Artist :: Album1",
 				ID:       playlistIDs[0],
-				Location: "../../test/services/storage/diskstorage/Music/cds/Artist/Album1",
+				Location: "../../testdata/services/storage/diskstorage/Music/cds/Artist/Album1",
 				Tracks:   []Track{tracks[0], tracks[1]},
 			},
 			{
 				Name:     "Artist :: Album2",
 				ID:       playlistIDs[1],
-				Location: "../../test/services/storage/diskstorage/Music/cds/Artist/Album2",
+				Location: "../../testdata/services/storage/diskstorage/Music/cds/Artist/Album2",
 				Tracks:   []Track{tracks[2]},
 			},
 		}, playlists)
@@ -121,9 +124,9 @@ func TestDiskStorage(t *testing.T) {
 
 		// Paths below relative to test/services/storage/diskstorage
 		require.Equal(t, []int{
-			104793, // Music/cds/Artist/Album1/track1-example.ogg
+			105283, // Music/cds/Artist/Album1/track1-example.ogg
 			980027, // Music/cds/Artist/Album1/track2-example.flac
-			104793, // Music/cds/Artist/Album2/track1-example.ogg
+			105283, // Music/cds/Artist/Album2/track1-example.ogg
 		}, dataLens)
 	})
 

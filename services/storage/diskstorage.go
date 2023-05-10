@@ -82,11 +82,31 @@ func (ds *DiskStorage) buildTracks() (map[string]Track, map[string]Playlist, err
 			return nil
 		}
 
+		fileinfo, err := os.Stat(location)
+		if err != nil {
+			return err
+		}
+
+		// TODO: move tags handling into common code for storage engines
+		r, err := os.Open(location)
+		if err != nil {
+			return err
+		}
+		tags, err := readTags(r, mimeType)
+		if err != nil {
+			return err
+		}
+		name := tags.Title
+		if name == "" {
+			name = d.Name()
+		}
+
 		track := Track{
-			Name:     d.Name(),
+			Name:     name,
 			ID:       trackUUID,
 			Location: location,
 			MIMEType: mimeType,
+			DataLen:  fileinfo.Size(),
 		}
 		tracksByID[track.ID] = track
 

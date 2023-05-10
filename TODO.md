@@ -1,6 +1,3 @@
- * Set up CI/CD in GitHub
- * Use golang-cilint thingy for linting
-
  * Better favicon for showing in browser title bar
 
  * Structured logging using the standard log package or something from https://blog.logrocket.com/5-structured-logging-packages-for-go/ ?
@@ -14,5 +11,17 @@
  * Add hotkeys for ffwd/frwd
  * Document hotkeys somewhere
 
+ * Make the audio player wider to make it easier to choose place in track with a click.
+
+ * Tags:
+   * FLAC (Vorbis comments) (DONE, needs test coverage)
+   * Ogg (Vorbis comments) (DONE, needs test coverage)
+   * ID3
+   * ID3 v2
+
  * Coverage
  * Function documentation
+
+ * Track data JSON blob - fetch that via API rather than including in generated HTML data
+   * with OpenAPI schema and validation in golang code
+ * Optimize track storage in media server (*Track instead of Track)

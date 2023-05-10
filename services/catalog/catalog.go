@@ -36,6 +36,7 @@ func (cs *CatalogService) AddStorage(ss storage.StorageService) error {
 			StorageServiceID: ssid,
 			Name:             storageTrack.Name,
 			MIMEType:         storageTrack.MIMEType,
+			DataLen:          storageTrack.DataLen,
 		}
 		cs.tracksByID[track.ID] = track
 		cs.allTracks = append(cs.allTracks, track)
@@ -55,6 +56,7 @@ func (cs *CatalogService) AddStorage(ss storage.StorageService) error {
 				StorageServiceID: ssid,
 				Name:             storageTrack.Name,
 				MIMEType:         storageTrack.MIMEType,
+				DataLen:          storageTrack.DataLen,
 			}
 			playlist.Tracks = append(playlist.Tracks, track)
 		}

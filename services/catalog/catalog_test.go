@@ -28,22 +28,23 @@ func TestCatalogService(t *testing.T) {
 
 		id := tracks[0].ID
 		assert.NotEqual(t, id, "example.ogg")
-		assert.Equal(t, tracks[0], Track{
-			Name:             "Example",
+		assert.Equal(t, Track{
+			Name:             "ExAmPlE",
 			ID:               id,
 			StorageServiceID: nullStorage.GetID(),
 			MIMEType:         "audio/ogg",
-		})
+			DataLen:          105269,
+		}, tracks[0])
 
 		playlistID := playlists[0].ID
 		assert.NotEqual(t, playlistID, "example.ogg")
 		assert.NotEqual(t, playlistID, id)
-		assert.Equal(t, playlists[0], Playlist{
+		assert.Equal(t, Playlist{
 			Name:             "null-playlist",
 			ID:               playlistID,
 			StorageServiceID: nullStorage.GetID(),
 			Tracks:           []Track{tracks[0]},
-		})
+		}, playlists[0])
 	})
 
 	t.Run("GetTrack", func(t *testing.T) {

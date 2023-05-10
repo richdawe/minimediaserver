@@ -8,6 +8,13 @@ import (
 
 var secret string = "you'll never guess this, oops"
 
+var (
+	MP3MimeType  = "audio/mp3"
+	MP4MimeType  = "audio/mp4"
+	OggMimeType  = "audio/ogg"
+	FlacMimeType = "audio/flac"
+)
+
 // locationToUUIDString converts a location into a stable UUID value,
 // for use in HTTP paths.
 func locationToUUIDString(location string) string {
@@ -23,13 +30,13 @@ func getMIMEType(filename string) string {
 	filename = strings.ToLower(filename)
 	switch {
 	case strings.HasSuffix(filename, ".mp3"):
-		mimeType = "audio/mp3"
+		mimeType = MP3MimeType
 	case strings.HasSuffix(filename, ".m4a"):
-		mimeType = "audio/mp4"
+		mimeType = MP4MimeType
 	case strings.HasSuffix(filename, ".ogg"):
-		mimeType = "audio/ogg"
+		mimeType = OggMimeType
 	case strings.HasSuffix(filename, ".flac"):
-		mimeType = "audio/flac"
+		mimeType = FlacMimeType
 	}
 
 	if mimeType == "" {

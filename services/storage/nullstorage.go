@@ -5,6 +5,7 @@ import (
 	"embed"
 	"errors"
 	"io"
+	"io/fs"
 
 	"github.com/google/uuid"
 )
@@ -31,13 +32,34 @@ func (ns *NullStorage) FindTracks() ([]Track, []Playlist, error) {
 		return ns.Tracks, ns.Playlists, nil
 	}
 
+	mimeType := OggMimeType
+	fileinfo, err := fs.Stat(exampleFS, exampleFilename)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// TODO: move tags handling into common code for storage engines
+	r, err := exampleFS.Open(exampleFilename)
+	if err != nil {
+		return nil, nil, err
+	}
+	tags, err := readTags(r, mimeType)
+	if err != nil {
+		return nil, nil, err
+	}
+	name := tags.Title
+	if name == "" {
+		name = "Example"
+	}
+
 	trackLocation := "/null/" + exampleFilename
 	trackUUID := locationToUUIDString(trackLocation)
 	track := Track{
-		Name:     "Example",
+		Name:     name,
 		ID:       trackUUID,
 		Location: trackLocation,
-		MIMEType: "audio/ogg",
+		MIMEType: mimeType,
+		DataLen:  fileinfo.Size(),
 	}
 	tracks := []Track{track}
 	ns.tracksByID[track.ID] = track

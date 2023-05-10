@@ -29,10 +29,14 @@ func TestNullStorage(t *testing.T) {
 		id := tracks[0].ID
 		assert.NotEqual(t, id, "example.ogg")
 		assert.Equal(t, tracks[0], Track{
-			Name:     "Example",
+			// TITLE comment checked and set using:
+			// vorbiscomment services/storage/example.ogg
+			// vorbiscomment -a -t title=ExAmPlE services/storage/example.ogg
+			Name:     "ExAmPlE",
 			ID:       id,
 			Location: "/null/example.ogg",
 			MIMEType: "audio/ogg",
+			DataLen:  105269,
 		})
 
 		playlistID := playlists[0].ID

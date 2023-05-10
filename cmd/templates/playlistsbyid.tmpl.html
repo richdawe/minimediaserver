@@ -35,7 +35,7 @@
 
     {{ with $firstItem := index .Tracks 0 }}
         <p>
-            <audio id="player" controls preload="none">
+            <audio id="player" controls preload="auto">
                 <source id="playersource" src="/tracks/{{ $firstItem.ID }}/data" type="{{ $firstItem.MIMEType }}" />
             </audio>
         </p>

@@ -83,11 +83,19 @@ func getPlaylistsByID(c echo.Context, catalogService *catalog.CatalogService) er
 	return c.Render(http.StatusOK, "playlistsbyid.tmpl.html", playlist)
 }
 
+func templateAddInt(a, b int) int {
+	return a + b
+}
+
 func setupEndpoints(catalogService *catalog.CatalogService) (*echo.Echo, error) {
-	t, err := template.ParseFS(templatesContent, "templates/*.tmpl.html")
+	t := template.New("endpoints").Funcs(template.FuncMap{
+		"addInt": templateAddInt,
+	})
+	t, err := t.ParseFS(templatesContent, "templates/*.tmpl.html")
 	if err != nil {
 		return nil, err
 	}
+
 	tr := &TemplateRenderer{
 		templates: t,
 	}

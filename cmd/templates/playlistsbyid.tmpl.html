@@ -59,7 +59,7 @@
                     {{ else }}
                       class="clickable-track"
                     {{ end }}
-                      >{{ $index }}. {{ .Name }}</td>
+                      >{{ addInt $index 1 }}. {{ .Name }}</td>
             {{ end }}
         </table>
     </p>

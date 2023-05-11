@@ -11,8 +11,6 @@
  * Add hotkeys for ffwd/frwd
  * Document hotkeys somewhere
 
- * Make the audio player wider to make it easier to choose place in track with a click.
-
  * Tags:
    * FLAC (Vorbis comments) (DONE, needs test coverage)
    * Ogg (Vorbis comments) (DONE, needs test coverage)

@@ -3,6 +3,11 @@ button {
     height: 33px;
 }
 
+audio {
+    width: 100%;
+    max-width: 600px;
+}
+
 .active-track {
     background-color: lightblue;
     cursor: pointer;

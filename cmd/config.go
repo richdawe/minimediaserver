@@ -18,6 +18,7 @@ type StorageServiceConfig struct {
 type Config struct {
 	Addr            string // Server IP + port
 	StorageServices []StorageServiceConfig
+	CacheMaxAge     int
 }
 
 func setLoadConfigOptions() {
@@ -31,6 +32,7 @@ func loadConfig() (Config, error) {
 	// Set some defaults
 	viper.SetDefault("host", "127.0.0.1")
 	viper.SetDefault("port", "1323")
+	viper.SetDefault("cachemaxage", "3600")
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -43,6 +45,7 @@ func loadConfig() (Config, error) {
 
 	var config Config
 
+	// config.Addr
 	host := viper.GetString("host")
 	if host == "*" {
 		host = ""
@@ -50,6 +53,7 @@ func loadConfig() (Config, error) {
 	port := viper.GetString("port")
 	config.Addr = host + ":" + port
 
+	// config.StorageServices
 	err := viper.UnmarshalKey("storageServices", &config.StorageServices)
 	if err != nil {
 		return Config{}, err
@@ -58,6 +62,9 @@ func loadConfig() (Config, error) {
 	for _, css := range config.StorageServices {
 		fmt.Printf("%+v\n", css)
 	}
+
+	// config.CacheMaxAge
+	config.CacheMaxAge = viper.GetInt("cachemaxage")
 
 	return config, nil
 }

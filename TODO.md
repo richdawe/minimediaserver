@@ -2,13 +2,10 @@
 
  * Structured logging using the standard log package or something from https://blog.logrocket.com/5-structured-logging-packages-for-go/ ?
 
- * HTTP cache headers on returned data? Not really that useful on local network?
-
  * Listen to media hotkeys in browser (and optionally allow this to be disabled?)
  * Stop playing music when the computer is being suspended/hibernated
 
  * Bug: Space doesn't seem pause/play correctly after changing track, when mouse is over media controls - need to be aware of mouseenter/mouseleave so space doesn't get double-processed?
- * Add hotkeys for ffwd/frwd
  * Document hotkeys somewhere
 
  * Tags:
@@ -16,6 +13,8 @@
    * Ogg (Vorbis comments) (DONE, needs test coverage)
    * ID3
    * ID3 v2
+
+ * Save volume level across invocations of page? (cookies? local storage?)
 
  * Coverage
  * Function documentation

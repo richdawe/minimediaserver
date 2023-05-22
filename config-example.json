@@ -14,5 +14,7 @@
 			"type": "diskStorage",
 			"path": "$HOME/Music/iTunes/iTunes Media/Music"
 		}
-	]
+	],
+
+	"cacheMaxAge": 3600
 }

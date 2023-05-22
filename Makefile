@@ -25,6 +25,7 @@ test:
 
 .PHONY:	lint
 lint:	lint-go lint-js
+	jq . config-example.json
 
 .PHONY: lint-go
 lint-go:

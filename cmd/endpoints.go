@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"html/template"
 	"io"
 	"net/http"
@@ -51,7 +52,7 @@ func getTracksByID(c echo.Context, catalogService *catalog.CatalogService) error
 	return c.Render(http.StatusOK, "tracksbyid.tmpl.html", track)
 }
 
-func getTracksByIDData(c echo.Context, catalogService *catalog.CatalogService) error {
+func getTracksByIDData(c echo.Context, catalogService *catalog.CatalogService, cacheMaxAge int) error {
 	id := c.Param("id")
 	track, err := catalogService.GetTrack(id)
 	if err != nil {
@@ -63,6 +64,9 @@ func getTracksByIDData(c echo.Context, catalogService *catalog.CatalogService) e
 		// TODO: return appropriate error for e.g.: track that can't be read
 		return err
 	}
+
+	// Allow the track data to be cached by the client.
+	c.Response().Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", cacheMaxAge))
 	return c.Stream(http.StatusOK, track.MIMEType, r)
 }
 
@@ -87,7 +91,7 @@ func templateAddInt(a, b int) int {
 	return a + b
 }
 
-func setupEndpoints(catalogService *catalog.CatalogService) (*echo.Echo, error) {
+func setupEndpoints(config Config, catalogService *catalog.CatalogService) (*echo.Echo, error) {
 	t := template.New("endpoints").Funcs(template.FuncMap{
 		"addInt": templateAddInt,
 	})
@@ -119,7 +123,7 @@ func setupEndpoints(catalogService *catalog.CatalogService) (*echo.Echo, error) 
 		return getTracksByID(c, catalogService)
 	})
 	e.GET("/tracks/:id/data", func(c echo.Context) error {
-		return getTracksByIDData(c, catalogService)
+		return getTracksByIDData(c, catalogService, config.CacheMaxAge)
 	})
 	e.GET("/playlists", func(c echo.Context) error {
 		return getPlaylists(c, catalogService)

@@ -22,7 +22,7 @@ func main() {
 	catalogService, err := buildCatalog(config)
 	handleErr(err)
 
-	e, err := setupEndpoints(catalogService)
+	e, err := setupEndpoints(config, catalogService)
 	handleErr(err)
 
 	// TODO: need a config file for specifying HTTP server options

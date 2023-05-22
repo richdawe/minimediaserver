@@ -10,6 +10,8 @@ import (
 )
 
 func TestEndpoints(t *testing.T) {
+	var config Config
+
 	catalogService, err := catalog.New()
 	require.NoError(t, err)
 
@@ -19,7 +21,7 @@ func TestEndpoints(t *testing.T) {
 	err = catalogService.AddStorage(nullStorage)
 	require.NoError(t, err)
 
-	e, err := setupEndpoints(catalogService)
+	e, err := setupEndpoints(config, catalogService)
 	require.NoError(t, err)
 	require.NotNil(t, e) // TODO: remove when something more interesting is happening
 

@@ -68,6 +68,12 @@ function nextTrack() {
     changeTrack(trackNumber, oldTrackNumber);
 }
 
+function changePosition(n) {
+    const audioPlayer = document.querySelector("#player");
+
+    audioPlayer.currentTime += n;
+}
+
 // initAudioPlayer is called from the HTML generated from playlistsbyid.tmpl.html
 // eslint-disable-next-line no-unused-vars
 function initAudioPlayer(availableTracks, n) {
@@ -125,23 +131,31 @@ function initAudioPlayer(availableTracks, n) {
         });
     }
 
-    // Hotkey: Space to play/pause, , for previous, . for next
-    // TODO: this doesn't work if the pointer is over Previous/Next -
-    // in that case it will press the button.
-    document.addEventListener("keyup", (event) => {
-        if (event.isComposing || event.keyCode === 229) {
+    // Hotkeys
+    document.addEventListener("keydown", (event) => {
+        if (event.isComposing) {
             return;
         }
-        if (event.keyCode == 32) { // space
+        // TODO: this doesn't work if the pointer is over
+        // Previous/Play+Pause/Next - in that case it will press the button.
+        if (event.key === " ") { // space
             pauseOrPlay();
             return;
         }
-        if (event.keyCode == 188) { // ,
+        if (event.key === ",") { // previous
             previousTrack();
             return;
         }
-        if (event.keyCode == 190) { // .
+        if (event.key === ".") { // next
             nextTrack();
+            return;
+        }
+        if (event.key === "<") { // rewind
+            changePosition(-15.0);
+            return;
+        }
+        if (event.key === ">") { // fast-forward
+            changePosition(15.0);
             return;
         }
     });

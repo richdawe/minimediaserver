@@ -1,7 +1,7 @@
 /*
     https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector
     https://developer.mozilla.org/en-US/docs/Web/API/Element/keydown_event
-    https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/keyCode
+    https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key
     https://developer.mozilla.org/en-US/docs/Web/API/Element/click_event
     https://developer.mozilla.org/en-US/docs/Web/HTML/Element/audio
     https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement
@@ -136,9 +136,13 @@ function initAudioPlayer(availableTracks, n) {
         if (event.isComposing) {
             return;
         }
-        // TODO: this doesn't work if the pointer is over
-        // Previous/Play+Pause/Next - in that case it will press the button.
-        if (event.key === " ") { // space
+
+        // If the play button is already the target of events,
+        // ignore this event. Let the button process its keypresses
+        // as normal. This avoids "bouncing" where space would trigger
+        // both a click and keydown event, resulting in pause-unpause
+        // (or unpause-pause).
+        if (event.key === " " && event.target.id !== "play") { // space
             pauseOrPlay();
             return;
         }

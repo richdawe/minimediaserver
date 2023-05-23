@@ -5,7 +5,6 @@
  * Listen to media hotkeys in browser (and optionally allow this to be disabled?)
  * Stop playing music when the computer is being suspended/hibernated
 
- * Bug: Space doesn't seem pause/play correctly after changing track, when mouse is over media controls - need to be aware of mouseenter/mouseleave so space doesn't get double-processed?
  * Document hotkeys somewhere
 
  * Tags:

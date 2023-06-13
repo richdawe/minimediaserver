@@ -56,6 +56,7 @@ func (ns *NullStorage) FindTracks() ([]Track, []Playlist, error) {
 	trackUUID := locationToUUIDString(trackLocation)
 	track := Track{
 		Name:     name,
+		Tags:     tags,
 		ID:       trackUUID,
 		Location: trackLocation,
 		MIMEType: mimeType,

@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/go-flac/flacvorbis"
@@ -10,10 +11,27 @@ import (
 	"github.com/jfreymuth/oggvorbis"
 )
 
+// *** Setting the title, etc. tags for Ogg files:
+//
+// TITLE comment checked and set using:
+// vorbiscomment services/storage/example.ogg
+// vorbiscomment -a -t title=ExAmPlE services/storage/example.ogg
+//
+// See also proposed standard field names at https://www.xiph.org/vorbis/doc/v-comment.html
+
+// *** Setting the tite, etc. for Flac files:
+//
+// metaflac --set-tag "TITLE=ALBUM1_TRACK2_EXAMPLE" --set-tag "album=album1" --set-tag "ARTIST=the-artist" testdata/services/storage/diskstorage/Music/cds/Artist/Album1/track2-example.flac
+// metaflac --list testdata/services/storage/diskstorage/Music/cds/Artist/Album1/track2-example.flac
+//
+// This uses the vorbis comment format too.
+
 type Tags struct {
-	Title  string
-	Artist string
-	Album  string
+	Title       string
+	Artist      string
+	Album       string
+	Genre       string
+	TrackNumber int
 }
 
 // TODO: Unify processing for ogg and flac vorbis comments
@@ -41,10 +59,19 @@ func readOggTags(r io.Reader) (Tags, error) {
 		tags.Title = title
 	}
 	if artist, ok := cm[flacvorbis.FIELD_ARTIST]; ok {
-		tags.Album = artist
+		tags.Artist = artist
 	}
 	if album, ok := cm[flacvorbis.FIELD_ALBUM]; ok {
 		tags.Album = album
+	}
+	if genre, ok := cm[flacvorbis.FIELD_GENRE]; ok {
+		tags.Genre = genre
+	}
+	if trackNumber, ok := cm[flacvorbis.FIELD_TRACKNUMBER]; ok {
+		n, err := strconv.Atoi(trackNumber)
+		if err == nil {
+			tags.TrackNumber = n
+		}
 	}
 
 	return tags, nil
@@ -82,6 +109,15 @@ func readFlacTags(r io.Reader) (Tags, error) {
 			}
 			if album, ok := getFlacComment(cmt, flacvorbis.FIELD_ALBUM); ok {
 				tags.Album = album
+			}
+			if genre, ok := getFlacComment(cmt, flacvorbis.FIELD_GENRE); ok {
+				tags.Genre = genre
+			}
+			if trackNumber, ok := getFlacComment(cmt, flacvorbis.FIELD_TRACKNUMBER); ok {
+				n, err := strconv.Atoi(trackNumber)
+				if err == nil {
+					tags.TrackNumber = n
+				}
 			}
 		}
 	}

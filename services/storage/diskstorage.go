@@ -103,6 +103,7 @@ func (ds *DiskStorage) buildTracks() (map[string]Track, map[string]Playlist, err
 
 		track := Track{
 			Name:     name,
+			Tags:     tags,
 			ID:       trackUUID,
 			Location: location,
 			MIMEType: mimeType,

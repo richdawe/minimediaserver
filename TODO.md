@@ -14,10 +14,10 @@
    * Completely override fetching the data in JS, and just give the player a buffer of data instead of a URL?
 
  * Tags:
-   * FLAC (Vorbis comments) (DONE, needs test coverage)
-   * Ogg (Vorbis comments) (DONE, needs test coverage)
-   * ID3
-   * ID3 v2
+   * FLAC (Vorbis comments) (DONE, needs unit test coverage)
+   * Ogg (Vorbis comments) (DONE, needs unit test coverage)
+   * ID3 (DONE, needs unit test coverage)
+   * ID3 v2 (DONE, needs unit test coverage)
    * Use for artist + title instead of filenames in playlists
    * Generate playlists based off tags (if present) rather than file location - playlist per album
 

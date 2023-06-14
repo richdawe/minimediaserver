@@ -7,7 +7,7 @@ import (
 	"github.com/richdawe/minimediaserver/services/storage"
 )
 
-type CatalogService struct {
+type BasicCatalog struct {
 	storageByID map[string]storage.StorageService // Indexed by storage ID
 
 	// TODO: is this even needed? vvv
@@ -20,7 +20,9 @@ type CatalogService struct {
 	allPlaylists  []Playlist
 }
 
-func (cs *CatalogService) AddStorage(ss storage.StorageService) error {
+// Assumptions:
+// * No ID collisions of tracks from different storage services
+func (cs *BasicCatalog) AddStorage(ss storage.StorageService) error {
 	ssid := ss.GetID()
 	cs.storageByID[ssid] = ss
 
@@ -67,11 +69,11 @@ func (cs *CatalogService) AddStorage(ss storage.StorageService) error {
 	return nil
 }
 
-func (cs *CatalogService) GetTracks() ([]Track, []Playlist) {
+func (cs *BasicCatalog) GetTracks() ([]Track, []Playlist) {
 	return cs.allTracks, cs.allPlaylists
 }
 
-func (cs *CatalogService) GetTrack(id string) (Track, error) {
+func (cs *BasicCatalog) GetTrack(id string) (Track, error) {
 	track, ok := cs.tracksByID[id]
 	if !ok {
 		return Track{}, errors.New("unable to find track by ID")
@@ -79,7 +81,7 @@ func (cs *CatalogService) GetTrack(id string) (Track, error) {
 	return track, nil
 }
 
-func (cs *CatalogService) GetPlaylist(id string) (Playlist, error) {
+func (cs *BasicCatalog) GetPlaylist(id string) (Playlist, error) {
 	playlist, ok := cs.playlistsByID[id]
 	if !ok {
 		return Playlist{}, errors.New("unable to find playlist by ID")
@@ -87,7 +89,7 @@ func (cs *CatalogService) GetPlaylist(id string) (Playlist, error) {
 	return playlist, nil
 }
 
-func (cs *CatalogService) ReadTrack(track Track) (io.Reader, error) {
+func (cs *BasicCatalog) ReadTrack(track Track) (io.Reader, error) {
 	_, err := cs.GetTrack(track.ID)
 	if err != nil {
 		return nil, err
@@ -99,8 +101,8 @@ func (cs *CatalogService) ReadTrack(track Track) (io.Reader, error) {
 	return ss.ReadTrack(track.ID)
 }
 
-func New() (*CatalogService, error) {
-	return &CatalogService{
+func NewBasicCatalog() (CatalogService, error) {
+	return &BasicCatalog{
 		storageByID:                 make(map[string]storage.StorageService, 0),
 		tracksByStorageServiceID:    make(map[string][]storage.Track),
 		playlistsByStorageServiceID: make(map[string][]storage.Playlist),

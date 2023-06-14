@@ -30,18 +30,18 @@ func (tr *TemplateRenderer) Render(w io.Writer, name string, data any, c echo.Co
 	return tr.templates.ExecuteTemplate(w, name, data)
 }
 
-func getRoot(c echo.Context, catalogService *catalog.CatalogService) error {
+func getRoot(c echo.Context, catalogService catalog.CatalogService) error {
 	// TODO: how to catch errors in template rendering?
 	return c.Render(http.StatusOK, "root.tmpl.html", make(map[string]string, 0))
 }
 
-func getTracks(c echo.Context, catalogService *catalog.CatalogService) error {
+func getTracks(c echo.Context, catalogService catalog.CatalogService) error {
 	// TODO: how to catch errors in template rendering?
 	tracks, _ := catalogService.GetTracks()
 	return c.Render(http.StatusOK, "tracks.tmpl.html", tracks)
 }
 
-func getTracksByID(c echo.Context, catalogService *catalog.CatalogService) error {
+func getTracksByID(c echo.Context, catalogService catalog.CatalogService) error {
 	id := c.Param("id")
 	track, err := catalogService.GetTrack(id)
 	if err != nil {
@@ -52,7 +52,7 @@ func getTracksByID(c echo.Context, catalogService *catalog.CatalogService) error
 	return c.Render(http.StatusOK, "tracksbyid.tmpl.html", track)
 }
 
-func getTracksByIDData(c echo.Context, catalogService *catalog.CatalogService, cacheMaxAge int) error {
+func getTracksByIDData(c echo.Context, catalogService catalog.CatalogService, cacheMaxAge int) error {
 	id := c.Param("id")
 	track, err := catalogService.GetTrack(id)
 	if err != nil {
@@ -70,13 +70,13 @@ func getTracksByIDData(c echo.Context, catalogService *catalog.CatalogService, c
 	return c.Stream(http.StatusOK, track.MIMEType, r)
 }
 
-func getPlaylists(c echo.Context, catalogService *catalog.CatalogService) error {
+func getPlaylists(c echo.Context, catalogService catalog.CatalogService) error {
 	// TODO: how to catch errors in template rendering?
 	_, playlists := catalogService.GetTracks()
 	return c.Render(http.StatusOK, "playlists.tmpl.html", playlists)
 }
 
-func getPlaylistsByID(c echo.Context, catalogService *catalog.CatalogService) error {
+func getPlaylistsByID(c echo.Context, catalogService catalog.CatalogService) error {
 	id := c.Param("id")
 	playlist, err := catalogService.GetPlaylist(id)
 	if err != nil {
@@ -91,7 +91,7 @@ func templateAddInt(a, b int) int {
 	return a + b
 }
 
-func setupEndpoints(config Config, catalogService *catalog.CatalogService) (*echo.Echo, error) {
+func setupEndpoints(config Config, catalogService catalog.CatalogService) (*echo.Echo, error) {
 	t := template.New("endpoints").Funcs(template.FuncMap{
 		"addInt": templateAddInt,
 	})

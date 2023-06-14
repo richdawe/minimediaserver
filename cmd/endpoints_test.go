@@ -12,7 +12,7 @@ import (
 func TestEndpoints(t *testing.T) {
 	var config Config
 
-	catalogService, err := catalog.New()
+	catalogService, err := catalog.NewBasicCatalog()
 	require.NoError(t, err)
 
 	// TODO: need a config file for configuring storage backends

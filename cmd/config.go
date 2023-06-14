@@ -69,8 +69,8 @@ func loadConfig() (Config, error) {
 	return config, nil
 }
 
-func buildCatalog(config Config) (*catalog.CatalogService, error) {
-	catalogService, err := catalog.New()
+func buildCatalog(config Config) (catalog.CatalogService, error) {
+	catalogService, err := catalog.NewBasicCatalog()
 	if err != nil {
 		return nil, err
 	}

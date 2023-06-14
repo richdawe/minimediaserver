@@ -11,7 +11,7 @@ import (
 )
 
 func TestCatalogService(t *testing.T) {
-	catalogService, err := New()
+	catalogService, err := NewBasicCatalog()
 	assert.Nil(t, err)
 	nullStorage, err := storage.NewNullStorage()
 	assert.Nil(t, err)

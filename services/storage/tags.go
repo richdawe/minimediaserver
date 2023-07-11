@@ -10,7 +10,7 @@ import (
 	"github.com/go-flac/flacvorbis"
 	"github.com/go-flac/go-flac"
 	"github.com/jfreymuth/oggvorbis"
-	id3 "github.com/mikkyang/id3-go"
+	id3 "github.com/richdawe/id3-go"
 )
 
 // TODO: one day look at replacing this code with https://github.com/dhowden/tag ?

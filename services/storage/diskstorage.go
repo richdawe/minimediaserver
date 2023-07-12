@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -46,22 +47,102 @@ func (ds *DiskStorage) FindTracks() ([]Track, []Playlist, error) {
 }
 
 // TODO: test coverage for findPlaylist*()
-func findPlaylistLocation(location string) string {
-	return filepath.Dir(location)
+func findPlaylistLocation(track Track) string {
+	return filepath.Dir(track.Location)
 }
 
-func findPlaylistArtistAlbum(location string) (string, string) {
-	playlistLocation := findPlaylistLocation(location)
+func findTrackArtistAlbum(track Track) (string, string) {
+	playlistLocation := findPlaylistLocation(track)
 
 	album := filepath.Base(playlistLocation)
 	artist := filepath.Base(filepath.Dir(playlistLocation))
 	return artist, album
 }
 
-func (ds *DiskStorage) buildTracks() (map[string]Track, map[string]Playlist, error) {
-	tracksByID := make(map[string]Track, 0)
+// TODO: This builds playlists based on albums having their own directory.
+// Other music collections (e.g.: my MP3s) use a flat format
+// with everything encoded in one filename. Could use with the playlist building
+// strategy being pluggable.
+func buildPlaylists(tracksByID map[string]Track) (map[string]Playlist, error) {
 	playlistsByID := make(map[string]Playlist, 0)
 	playlistsByLocation := make(map[string]string, 0) // value is playlist ID
+
+	for _, track := range tracksByID {
+		playlistLocation := findPlaylistLocation(track)
+		playlistUUID := locationToUUIDString(playlistLocation)
+
+		playlistID, ok := playlistsByLocation[playlistLocation]
+		if !ok {
+			playlistName := fmt.Sprintf("%s :: %s", track.Artist, track.Album)
+
+			playlist := Playlist{
+				Name:     playlistName,
+				ID:       playlistUUID,
+				Location: playlistLocation,
+				Tracks:   make([]Track, 0, 1),
+			}
+
+			playlistID = playlist.ID
+			playlistsByLocation[playlistLocation] = playlistID
+			playlistsByID[playlistID] = playlist
+		}
+
+		playlist := playlistsByID[playlistID]
+		playlist.Tracks = append(playlist.Tracks, track)
+		playlistsByID[playlistID] = playlist
+	}
+
+	// Sort the tracks in a playlist by the filename (location).
+	// This is a proxy for their position in the playlist (until we use tags).
+	for _, playlist := range playlistsByID {
+		sort.Slice(playlist.Tracks, func(i int, j int) bool {
+			return playlist.Tracks[i].Location < playlist.Tracks[j].Location
+		})
+	}
+
+	return playlistsByID, nil
+}
+
+func annotateTrack(track *Track, filename string) {
+	/*
+		name := tags.Title
+		if name == "" {
+			name = filename
+		}
+		track.Name = name
+	*/
+
+	// Strategy 1: Use tags to determine artist, album, etc. information.
+	// TODO
+	/*
+		if tags.Artist != "" && tags.Album != "" && tags.Title != "" {
+
+		} else {
+
+		}
+	*/
+
+	// Strategy 2: Regular expression matching (if enabled for this storage instance).
+	// TODO
+
+	// Strategy 3: Parse from directory and filename
+	artist, album := findTrackArtistAlbum(*track)
+
+	idx := strings.LastIndex(filename, ".")
+	if idx == -1 {
+		idx = len(filename)
+	}
+	title := filename[:idx]
+
+	track.Artist = artist
+	track.Album = album
+	track.Title = title
+
+	track.Name = title
+}
+
+func (ds *DiskStorage) buildTracks() (map[string]Track, map[string]Playlist, error) {
+	tracksByID := make(map[string]Track, 0)
 
 	fileSystem := os.DirFS(ds.BasePath)
 
@@ -96,50 +177,24 @@ func (ds *DiskStorage) buildTracks() (map[string]Track, map[string]Playlist, err
 		if err != nil {
 			return err
 		}
-		name := tags.Title
-		if name == "" {
-			name = d.Name()
-		}
 
 		track := Track{
-			Name:     name,
-			Tags:     tags,
 			ID:       trackUUID,
 			Location: location,
 			MIMEType: mimeType,
 			DataLen:  fileinfo.Size(),
+			Tags:     tags,
 		}
+		annotateTrack(&track, d.Name())
 		tracksByID[track.ID] = track
 
-		// TODO: This builds playlists based on albums having their own directory.
-		// Other music collections (e.g.: my MP3s) use a flat format
-		// with everything encoded in one filename. Could use with the playlist building
-		// strategy being pluggable.
-		playlistLocation := findPlaylistLocation(location)
-		playlistUUID := locationToUUIDString(playlistLocation)
-
-		playlistID, ok := playlistsByLocation[playlistLocation]
-		if !ok {
-			artist, album := findPlaylistArtistAlbum(location)
-			playlistName := fmt.Sprintf("%s :: %s", artist, album)
-
-			playlist := Playlist{
-				Name:     playlistName,
-				ID:       playlistUUID,
-				Location: playlistLocation,
-				Tracks:   make([]Track, 0, 1),
-			}
-
-			playlistID = playlist.ID
-			playlistsByLocation[playlistLocation] = playlistID
-			playlistsByID[playlistID] = playlist
-		}
-
-		playlist := playlistsByID[playlistID]
-		playlist.Tracks = append(playlist.Tracks, track)
-		playlistsByID[playlistID] = playlist
 		return nil
 	})
+
+	playlistsByID, err := buildPlaylists(tracksByID)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	return tracksByID, playlistsByID, walkErr
 }

@@ -35,33 +35,57 @@ func TestDiskStorage(t *testing.T) {
 
 		assert.Equal(t, []Track{
 			{
-				Name:     "ALBUM1_TRACK1_EXAMPLE",
-				Tags:     Tags{Title: "ALBUM1_TRACK1_EXAMPLE", Album: "album1", Artist: "the-artist", Genre: "Example", TrackNumber: 1},
+				//Name:   "ALBUM1_TRACK1_EXAMPLE", // Not taken from tags yet
+				Name:   "track1-example",
+				Title:  "track1-example",
+				Artist: "Artist",
+				Album:  "Album1",
+
+				Tags: Tags{Title: "ALBUM1_TRACK1_EXAMPLE", Album: "album1", Artist: "the-artist", Genre: "Example", TrackNumber: 1},
+
 				ID:       trackIDs[0],
 				Location: "../../testdata/services/storage/diskstorage/Music/cds/Artist/Album1/track1-example.ogg",
 				MIMEType: "audio/ogg",
 				DataLen:  105354,
 			},
 			{
-				Name:     "ALBUM1_TRACK2_EXAMPLE",
-				Tags:     Tags{Title: "ALBUM1_TRACK2_EXAMPLE", Album: "album1", Artist: "the-artist", Genre: "ExampleMulti-value", TrackNumber: 2},
+				//Name: "ALBUM1_TRACK2_EXAMPLE", // Not taken from tags yet
+				Name:   "track2-example",
+				Title:  "track2-example",
+				Artist: "Artist",
+				Album:  "Album1",
+
+				Tags: Tags{Title: "ALBUM1_TRACK2_EXAMPLE", Album: "album1", Artist: "the-artist", Genre: "ExampleMulti-value", TrackNumber: 2},
+
 				ID:       trackIDs[1],
 				Location: "../../testdata/services/storage/diskstorage/Music/cds/Artist/Album1/track2-example.flac",
 				MIMEType: "audio/flac",
 				DataLen:  980027,
 			},
 			{
-				Name:     "ALBUM2_TRACK1_EXAMPLE",
-				Tags:     Tags{Title: "ALBUM2_TRACK1_EXAMPLE", Album: "album2", Artist: "another-artist"},
+				//Name: "ALBUM2_TRACK1_EXAMPLE", // Not taken from tags yet
+				Name:   "track1-example",
+				Title:  "track1-example",
+				Artist: "Artist",
+				Album:  "Album2",
+
+				Tags: Tags{Title: "ALBUM2_TRACK1_EXAMPLE", Album: "album2", Artist: "another-artist"},
+
 				ID:       trackIDs[2],
 				Location: "../../testdata/services/storage/diskstorage/Music/cds/Artist/Album2/track1-example.ogg",
 				MIMEType: "audio/ogg",
 				DataLen:  105324,
 			},
-			// TODO: fix tags
+			// TODO: fix tags to not contain nuls - may need a changeset from a PR on id3-go
 			{
-				Name:     "ALBUM1_TRACK2_EXAMPLE\x00",
-				Tags:     Tags{Title: "ALBUM1_TRACK2_EXAMPLE\x00", Album: "album1\x00", Artist: "the-artist\x00", Genre: "Example;Multi-value\x00"},
+				//Name:     "ALBUM1_TRACK2_EXAMPLE\x00", // Not taken from tags yet
+				Name:   "track2-example",
+				Title:  "track2-example",
+				Artist: "Artist",
+				Album:  "Album2",
+
+				Tags: Tags{Title: "ALBUM1_TRACK2_EXAMPLE\x00", Album: "album1\x00", Artist: "the-artist\x00", Genre: "Example;Multi-value\x00"},
+
 				ID:       trackIDs[3],
 				Location: "../../testdata/services/storage/diskstorage/Music/cds/Artist/Album2/track2-example.mp3",
 				MIMEType: "audio/mp3",

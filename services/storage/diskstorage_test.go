@@ -26,7 +26,7 @@ func TestDiskStorage(t *testing.T) {
 		assert.Equal(t, len(tracks), 4)
 
 		assert.NotNil(t, playlists)
-		assert.Equal(t, len(playlists), 2)
+		assert.Equal(t, len(playlists), 3)
 
 		// Check tracks
 		trackIDs := []string{
@@ -35,11 +35,12 @@ func TestDiskStorage(t *testing.T) {
 
 		assert.Equal(t, []Track{
 			{
-				//Name:   "ALBUM1_TRACK1_EXAMPLE", // Not taken from tags yet
-				Name:   "track1-example",
-				Title:  "track1-example",
-				Artist: "Artist",
-				Album:  "Album1",
+				Name:   "ALBUM1_TRACK1_EXAMPLE",
+				Title:  "ALBUM1_TRACK1_EXAMPLE",
+				Artist: "the-artist",
+				Album:  "album1",
+
+				PlaylistLocation: "tags:../../testdata/services/storage/diskstorage/Music/cds/the-artist/album1",
 
 				Tags: Tags{Title: "ALBUM1_TRACK1_EXAMPLE", Album: "album1", Artist: "the-artist", Genre: "Example", TrackNumber: 1},
 
@@ -49,11 +50,12 @@ func TestDiskStorage(t *testing.T) {
 				DataLen:  105354,
 			},
 			{
-				//Name: "ALBUM1_TRACK2_EXAMPLE", // Not taken from tags yet
-				Name:   "track2-example",
-				Title:  "track2-example",
-				Artist: "Artist",
-				Album:  "Album1",
+				Name:   "ALBUM1_TRACK2_EXAMPLE",
+				Title:  "ALBUM1_TRACK2_EXAMPLE",
+				Artist: "the-artist",
+				Album:  "album1",
+
+				PlaylistLocation: "tags:../../testdata/services/storage/diskstorage/Music/cds/the-artist/album1",
 
 				Tags: Tags{Title: "ALBUM1_TRACK2_EXAMPLE", Album: "album1", Artist: "the-artist", Genre: "ExampleMulti-value", TrackNumber: 2},
 
@@ -63,11 +65,12 @@ func TestDiskStorage(t *testing.T) {
 				DataLen:  980027,
 			},
 			{
-				//Name: "ALBUM2_TRACK1_EXAMPLE", // Not taken from tags yet
-				Name:   "track1-example",
-				Title:  "track1-example",
-				Artist: "Artist",
-				Album:  "Album2",
+				Name:   "ALBUM2_TRACK1_EXAMPLE",
+				Title:  "ALBUM2_TRACK1_EXAMPLE",
+				Artist: "another-artist",
+				Album:  "album2",
+
+				PlaylistLocation: "tags:../../testdata/services/storage/diskstorage/Music/cds/another-artist/album2",
 
 				Tags: Tags{Title: "ALBUM2_TRACK1_EXAMPLE", Album: "album2", Artist: "another-artist"},
 
@@ -78,11 +81,12 @@ func TestDiskStorage(t *testing.T) {
 			},
 			// TODO: fix tags to not contain nuls - may need a changeset from a PR on id3-go
 			{
-				//Name:     "ALBUM1_TRACK2_EXAMPLE\x00", // Not taken from tags yet
-				Name:   "track2-example",
-				Title:  "track2-example",
-				Artist: "Artist",
-				Album:  "Album2",
+				Name:   "ALBUM1_TRACK2_EXAMPLE\x00",
+				Title:  "ALBUM1_TRACK2_EXAMPLE\x00",
+				Artist: "the-artist\x00",
+				Album:  "album1\x00",
+
+				PlaylistLocation: "tags:../../testdata/services/storage/diskstorage/Music/cds/the-artist\x00/album1\x00",
 
 				Tags: Tags{Title: "ALBUM1_TRACK2_EXAMPLE\x00", Album: "album1\x00", Artist: "the-artist\x00", Genre: "Example;Multi-value\x00"},
 
@@ -103,21 +107,27 @@ func TestDiskStorage(t *testing.T) {
 
 		// Check playlists
 		playlistIDs := []string{
-			playlists[0].ID, playlists[1].ID,
+			playlists[0].ID, playlists[1].ID, playlists[2].ID,
 		}
 
 		assert.Equal(t, []Playlist{
 			{
-				Name:     "Artist :: Album1",
+				Name:     "another-artist :: album2",
 				ID:       playlistIDs[0],
-				Location: "../../testdata/services/storage/diskstorage/Music/cds/Artist/Album1",
-				Tracks:   []Track{tracks[0], tracks[1]},
+				Location: "tags:../../testdata/services/storage/diskstorage/Music/cds/another-artist/album2",
+				Tracks:   []Track{tracks[2]},
 			},
 			{
-				Name:     "Artist :: Album2",
+				Name:     "the-artist\x00 :: album1\x00",
 				ID:       playlistIDs[1],
-				Location: "../../testdata/services/storage/diskstorage/Music/cds/Artist/Album2",
-				Tracks:   []Track{tracks[2], tracks[3]},
+				Location: "tags:../../testdata/services/storage/diskstorage/Music/cds/the-artist\x00/album1\x00",
+				Tracks:   []Track{tracks[3]},
+			},
+			{
+				Name:     "the-artist :: album1",
+				ID:       playlistIDs[2],
+				Location: "tags:../../testdata/services/storage/diskstorage/Music/cds/the-artist/album1",
+				Tracks:   []Track{tracks[0], tracks[1]},
 			},
 		}, playlists)
 	})
@@ -130,14 +140,14 @@ func TestDiskStorage(t *testing.T) {
 		require.NotNil(t, tracks)
 		require.Equal(t, len(tracks), 4)
 		require.NotNil(t, playlists)
-		require.Equal(t, len(playlists), 2)
+		require.Equal(t, len(playlists), 3)
 
 		tracks2, playlists2, err := s.FindTracks()
 		require.NoError(t, err)
 		require.NotNil(t, tracks)
 		require.Equal(t, len(tracks), 4)
 		require.NotNil(t, playlists)
-		require.Equal(t, len(playlists), 2)
+		require.Equal(t, len(playlists), 3)
 
 		assert.Equal(t, tracks, tracks2)
 		assert.Equal(t, playlists, playlists2)

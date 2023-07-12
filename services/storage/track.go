@@ -8,11 +8,13 @@ type Track struct {
 
 	Tags Tags // Tags (if any), from track data or elsewhere (e.g.: DB)
 
-	// The following fields may be computed.
+	// The following fields are computed.
 	Name        string // Textual description
 	Title       string
 	Artist      string
 	Album       string
 	Genre       string // May be empty
 	TrackNumber int    // 0 means unknown.
+
+	PlaylistLocation string // Location for the playlist; may be a virtual URL, like tags:/path or regex:/path
 }

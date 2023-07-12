@@ -1,3 +1,5 @@
+ * Command-line switches for help
+
  * Better favicon for showing in browser title bar
 
  * Structured logging using the standard log package or something from https://blog.logrocket.com/5-structured-logging-packages-for-go/ ?

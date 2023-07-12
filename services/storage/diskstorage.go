@@ -46,19 +46,6 @@ func (ds *DiskStorage) FindTracks() ([]Track, []Playlist, error) {
 	return ds.sortedTracks, ds.sortedPlaylists, nil
 }
 
-// TODO: test coverage for findPlaylist*()
-func findPlaylistLocation(track Track) string {
-	return filepath.Dir(track.Location)
-}
-
-func findTrackArtistAlbum(track Track) (string, string) {
-	playlistLocation := findPlaylistLocation(track)
-
-	album := filepath.Base(playlistLocation)
-	artist := filepath.Base(filepath.Dir(playlistLocation))
-	return artist, album
-}
-
 // TODO: This builds playlists based on albums having their own directory.
 // Other music collections (e.g.: my MP3s) use a flat format
 // with everything encoded in one filename. Could use with the playlist building
@@ -68,7 +55,7 @@ func buildPlaylists(tracksByID map[string]Track) (map[string]Playlist, error) {
 	playlistsByLocation := make(map[string]string, 0) // value is playlist ID
 
 	for _, track := range tracksByID {
-		playlistLocation := findPlaylistLocation(track)
+		playlistLocation := track.PlaylistLocation
 		playlistUUID := locationToUUIDString(playlistLocation)
 
 		playlistID, ok := playlistsByLocation[playlistLocation]
@@ -103,42 +90,56 @@ func buildPlaylists(tracksByID map[string]Track) (map[string]Playlist, error) {
 	return playlistsByID, nil
 }
 
-func annotateTrack(track *Track, filename string) {
-	/*
-		name := tags.Title
-		if name == "" {
-			name = filename
-		}
-		track.Name = name
-	*/
+// TODO: Probably would be cleaner to have this build the track completely
+// given some input data?
+func (ds *DiskStorage) annotateTrack(track *Track, filename string) {
+	var artist, album, title string
+
+	// Default playlist location is the directory containing the file.
+	// This may be overridden below.
+	playlistLocation := filepath.Dir(track.Location)
+	// TODO: need a default playlist name here too (e.g.: for "mp3" directory)
+	// in case the strategy doesn't work.
+	// TODO: need to be able to unit test these strategies.
 
 	// Strategy 1: Use tags to determine artist, album, etc. information.
-	// TODO
+	if track.Tags.Artist != "" && track.Tags.Album != "" && track.Tags.Title != "" {
+		artist = track.Tags.Artist
+		album = track.Tags.Album
+		title = track.Tags.Title
+		// TODO: Need ID3 TPE2 or other field to represent "Various Artists"?
+		// and move artist into title for various artists albums
+
+		// TODO: track number, and use that to position in playlists.
+
+		playlistLocation = "tags:" + filepath.Join(ds.BasePath, artist, album)
+	}
+
+	// Strategy 2: Regular expression matching (if enabled for this storage instance).
 	/*
-		if tags.Artist != "" && tags.Album != "" && tags.Title != "" {
-
-		} else {
-
+		if artist == "" && album == "" && title == "" {
 		}
 	*/
 
-	// Strategy 2: Regular expression matching (if enabled for this storage instance).
-	// TODO
-
 	// Strategy 3: Parse from directory and filename
-	artist, album := findTrackArtistAlbum(*track)
+	if artist == "" && album == "" && title == "" {
+		album = filepath.Base(track.Location)
+		artist = filepath.Base(filepath.Dir(track.Location))
 
-	idx := strings.LastIndex(filename, ".")
-	if idx == -1 {
-		idx = len(filename)
+		idx := strings.LastIndex(filename, ".")
+		if idx == -1 {
+			idx = len(filename)
+		}
+		title = filename[:idx]
 	}
-	title := filename[:idx]
 
+	// Finally, annotate the track.
 	track.Artist = artist
 	track.Album = album
 	track.Title = title
-
 	track.Name = title
+
+	track.PlaylistLocation = playlistLocation
 }
 
 func (ds *DiskStorage) buildTracks() (map[string]Track, map[string]Playlist, error) {
@@ -185,7 +186,7 @@ func (ds *DiskStorage) buildTracks() (map[string]Track, map[string]Playlist, err
 			DataLen:  fileinfo.Size(),
 			Tags:     tags,
 		}
-		annotateTrack(&track, d.Name())
+		ds.annotateTrack(&track, d.Name())
 		tracksByID[track.ID] = track
 
 		return nil
@@ -228,10 +229,6 @@ func (ds *DiskStorage) buildSortedTracks() ([]Track, []Playlist) {
 	// Find and sort the playlist IDs based on the location
 	// of the playlist. Then build list of sorted playlists
 	// using the sorted list of playlist IDs.
-	//
-	// TODO: This might need a pluggable strategy for music
-	// that is not split out into a directory per album
-	// (see also the comment in the building process).
 	playlistIDs := make([]string, 0, 1)
 	for _, playlist := range playlistsByID {
 		playlistIDs = append(playlistIDs, playlist.ID)

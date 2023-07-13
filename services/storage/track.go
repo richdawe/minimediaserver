@@ -13,6 +13,8 @@ type Track struct {
 	Title       string
 	Artist      string
 	Album       string
+	AlbumArtist string // Will be different to Artist for e.g.: for compilations, or orchestral performances
+	AlbumId     string // May be empty
 	Genre       string // May be empty
 	TrackNumber int    // 0 means unknown.
 

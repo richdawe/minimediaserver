@@ -73,3 +73,9 @@ What should we use for playlists based on tags or regex matches? Let's use fake 
 Note that there is a playlist for each album by an artist. There is no support for a playlist covering a selection of songs, or multiple albums by an artist. Supporting that is not currently a goal.
 
 The playlist ID is generated using the location. The playlist ID should be stable - i.e.: the same across restarts of minimediaserver.
+
+TODO: Issues:
+
+ * FLAC Vorbis tags seem to be missing overall artist tag (e.g.: "Various") - need some heuristics to figure out actual artist? Can use the CDDB tag to match albums too.
+ * Probably need post-processing step for playlist to handle multi-artist album
+ * Mermaid-format diagram of processing pipeline for DiskStorageService, since it's not straightforward anymore ;)

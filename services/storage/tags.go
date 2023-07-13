@@ -11,6 +11,7 @@ import (
 	"github.com/go-flac/go-flac"
 	"github.com/jfreymuth/oggvorbis"
 	id3 "github.com/richdawe/id3-go"
+	v2 "github.com/richdawe/id3-go/v2"
 )
 
 // TODO: one day look at replacing this code with https://github.com/dhowden/tag ?
@@ -30,12 +31,18 @@ import (
 //
 // This uses the vorbis comment format too.
 
+// id3v2 tool on Linux does not seem to support ID3 v2.4. But exiftool does.
+// exiftool -v3 -l testdata/services/storage/diskstorage/Music/cds/Artist/Album2/track2-example.mp3
+
+// These fields are only set if there is a tag for them.
 type Tags struct {
 	Title       string
 	Artist      string
 	Album       string
+	AlbumArtist string // E.g.: for compilations, or orchestral performances
+	AlbumId     string // E.g.: ID from CDDB, or similar services
 	Genre       string
-	TrackNumber int
+	TrackNumber int // 0 means unset.
 }
 
 // Convert a vorbis comment list into a map for lookups.
@@ -58,6 +65,7 @@ func commentsToMap(comments []string) map[string]string {
 
 // Get the tags we're interested in from a map of comments.
 func getTags(commentsMap map[string]string) (tags Tags) {
+	// Standard tags
 	if title, ok := commentsMap[flacvorbis.FIELD_TITLE]; ok {
 		tags.Title = title
 	}
@@ -76,6 +84,12 @@ func getTags(commentsMap map[string]string) (tags Tags) {
 			tags.TrackNumber = n
 		}
 	}
+
+	// Extension or non-standard tags
+	if albumId, ok := commentsMap["CDDB"]; ok {
+		tags.AlbumId = albumId
+	}
+
 	return
 }
 
@@ -131,12 +145,33 @@ func readMP3Tags(r io.Reader) (Tags, error) {
 		return Tags{}, err
 	}
 
-	return Tags{
+	tags := Tags{
 		Title:  file.Title(),
 		Artist: file.Artist(),
 		Album:  file.Album(),
 		Genre:  file.Genre(),
-	}, nil
+	}
+
+	// Determine album artist from ID3v2 tags. Prefer TPE2 over TPE3,
+	// since that seems to match the MP3 file naming.
+	//
+	// $ id3v2 -l Various\ artists/Children\'s\ Christmas/01\ -\ Hey\ Santa\ Claus.mp3  | grep TPE
+	// TPE1 (Lead performer(s)/Soloist(s)): The Platters
+	// TPE3 (Conductor/performer refinement):
+	// TPE2 (Band/orchestra/accompaniment): Various artists
+	albumArtistTags := []string{"TPE2", "TPE3", "TPE1"}
+	for _, tagName := range albumArtistTags {
+		parsedFrame := file.Frame(tagName)
+		if parsedFrame == nil {
+			continue
+		}
+		if resultFrame, ok := parsedFrame.(*v2.TextFrame); ok {
+			tags.AlbumArtist = resultFrame.String()
+			break
+		}
+	}
+
+	return tags, nil
 }
 
 // Read the tags from a media file.

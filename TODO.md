@@ -20,6 +20,7 @@
    * Ogg (Vorbis comments) (DONE, needs unit test coverage)
    * ID3 (DONE, needs unit test coverage)
    * ID3 v2 (DONE, needs unit test coverage)
+   * M4A files from iTunes
    * Use for artist + title instead of filenames in playlists
    * Generate playlists based off tags (if present) rather than file location - playlist per album
 

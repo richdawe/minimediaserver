@@ -35,10 +35,11 @@ func TestDiskStorage(t *testing.T) {
 
 		assert.Equal(t, []Track{
 			{
-				Name:   "ALBUM1_TRACK1_EXAMPLE",
-				Title:  "ALBUM1_TRACK1_EXAMPLE",
-				Artist: "the-artist",
-				Album:  "album1",
+				Name:        "ALBUM1_TRACK1_EXAMPLE",
+				Title:       "ALBUM1_TRACK1_EXAMPLE",
+				Artist:      "the-artist",
+				Album:       "album1",
+				AlbumArtist: "the-artist",
 
 				PlaylistLocation: "tags:../../testdata/services/storage/diskstorage/Music/cds/the-artist/album1",
 
@@ -50,10 +51,11 @@ func TestDiskStorage(t *testing.T) {
 				DataLen:  105354,
 			},
 			{
-				Name:   "ALBUM1_TRACK2_EXAMPLE",
-				Title:  "ALBUM1_TRACK2_EXAMPLE",
-				Artist: "the-artist",
-				Album:  "album1",
+				Name:        "ALBUM1_TRACK2_EXAMPLE",
+				Title:       "ALBUM1_TRACK2_EXAMPLE",
+				Artist:      "the-artist",
+				Album:       "album1",
+				AlbumArtist: "the-artist",
 
 				PlaylistLocation: "tags:../../testdata/services/storage/diskstorage/Music/cds/the-artist/album1",
 
@@ -65,10 +67,11 @@ func TestDiskStorage(t *testing.T) {
 				DataLen:  980027,
 			},
 			{
-				Name:   "ALBUM2_TRACK1_EXAMPLE",
-				Title:  "ALBUM2_TRACK1_EXAMPLE",
-				Artist: "another-artist",
-				Album:  "album2",
+				Name:        "ALBUM2_TRACK1_EXAMPLE",
+				Title:       "ALBUM2_TRACK1_EXAMPLE",
+				Artist:      "another-artist",
+				Album:       "album2",
+				AlbumArtist: "another-artist",
 
 				PlaylistLocation: "tags:../../testdata/services/storage/diskstorage/Music/cds/another-artist/album2",
 
@@ -81,14 +84,15 @@ func TestDiskStorage(t *testing.T) {
 			},
 			// TODO: fix tags to not contain nuls - may need a changeset from a PR on id3-go
 			{
-				Name:   "ALBUM1_TRACK2_EXAMPLE\x00",
-				Title:  "ALBUM1_TRACK2_EXAMPLE\x00",
-				Artist: "the-artist\x00",
-				Album:  "album1\x00",
+				Name:        "ALBUM1_TRACK2_EXAMPLE\x00",
+				Title:       "ALBUM1_TRACK2_EXAMPLE\x00",
+				Artist:      "the-artist\x00",
+				Album:       "album1\x00",
+				AlbumArtist: "the-artist\x00",
 
 				PlaylistLocation: "tags:../../testdata/services/storage/diskstorage/Music/cds/the-artist\x00/album1\x00",
 
-				Tags: Tags{Title: "ALBUM1_TRACK2_EXAMPLE\x00", Album: "album1\x00", Artist: "the-artist\x00", Genre: "Example;Multi-value\x00"},
+				Tags: Tags{Title: "ALBUM1_TRACK2_EXAMPLE\x00", Album: "album1\x00", AlbumArtist: "the-artist\x00", Artist: "the-artist\x00", Genre: "Example;Multi-value\x00"},
 
 				ID:       trackIDs[3],
 				Location: "../../testdata/services/storage/diskstorage/Music/cds/Artist/Album2/track2-example.mp3",

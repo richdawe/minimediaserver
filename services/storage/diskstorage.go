@@ -60,7 +60,15 @@ func buildPlaylists(tracksByID map[string]Track) (map[string]Playlist, error) {
 
 		playlistID, ok := playlistsByLocation[playlistLocation]
 		if !ok {
-			playlistName := fmt.Sprintf("%s :: %s", track.Artist, track.Album)
+			// TODO: This isn't quite right in the case where there is an album
+			// with multiple artists, but the AlbumArtist defaults to the artist.
+			// We need some heuristics to group tracks based on location / album ID / album name
+			// and then generate "Various artists" if each track in the playlist
+			// has a different artist name.
+			//
+			// This will probably require track.AlbumArtist to be empty,
+			// if it's not defined in tags, so that we know when to use heuristics.
+			playlistName := fmt.Sprintf("%s :: %s", track.AlbumArtist, track.Album)
 
 			playlist := Playlist{
 				Name:     playlistName,
@@ -93,7 +101,7 @@ func buildPlaylists(tracksByID map[string]Track) (map[string]Playlist, error) {
 // TODO: Probably would be cleaner to have this build the track completely
 // given some input data?
 func (ds *DiskStorage) annotateTrack(track *Track, filename string) {
-	var artist, album, title string
+	var artist, album, albumArtist, albumId, title string
 
 	// Default playlist location is the directory containing the file.
 	// This may be overridden below.
@@ -106,13 +114,21 @@ func (ds *DiskStorage) annotateTrack(track *Track, filename string) {
 	if track.Tags.Artist != "" && track.Tags.Album != "" && track.Tags.Title != "" {
 		artist = track.Tags.Artist
 		album = track.Tags.Album
+		albumArtist = track.Tags.AlbumArtist
+		albumId = track.Tags.AlbumId
 		title = track.Tags.Title
-		// TODO: Need ID3 TPE2 or other field to represent "Various Artists"?
-		// and move artist into title for various artists albums
 
 		// TODO: track number, and use that to position in playlists.
 
-		playlistLocation = "tags:" + filepath.Join(ds.BasePath, artist, album)
+		// Use the most defined tag we can for the playlist path.
+		artistPath := artist
+		if albumArtist != "" {
+			artistPath = albumArtist
+		}
+		if albumId != "" {
+			artistPath = albumId
+		}
+		playlistLocation = "tags:" + filepath.Join(ds.BasePath, artistPath, album)
 	}
 
 	// Strategy 2: Regular expression matching (if enabled for this storage instance).
@@ -123,8 +139,9 @@ func (ds *DiskStorage) annotateTrack(track *Track, filename string) {
 
 	// Strategy 3: Parse from directory and filename
 	if artist == "" && album == "" && title == "" {
-		album = filepath.Base(track.Location)
-		artist = filepath.Base(filepath.Dir(track.Location))
+		trackDir := filepath.Dir(track.Location)
+		album = filepath.Base(trackDir)
+		artist = filepath.Base(filepath.Dir(trackDir))
 
 		idx := strings.LastIndex(filename, ".")
 		if idx == -1 {
@@ -134,8 +151,14 @@ func (ds *DiskStorage) annotateTrack(track *Track, filename string) {
 	}
 
 	// Finally, annotate the track.
+	if albumArtist == "" {
+		albumArtist = artist
+	}
+
 	track.Artist = artist
 	track.Album = album
+	track.AlbumArtist = albumArtist
+	track.AlbumId = albumId
 	track.Title = title
 	track.Name = title
 

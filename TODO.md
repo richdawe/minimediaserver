@@ -1,5 +1,17 @@
  * Command-line switches for help
 
+ * Log stats during start-up
+   * Time per storage backend to evaluate all files
+   * Total number of tracks found, ignored
+
+ * Disk storage service improvements
+   * Allow for storage backend errors - optionally ignore if configured (e.g.: for NFS)
+   * Refresh every n seconds
+   * Look at improving start-up time using parallel directory exploration (queue w/ goroutines?)
+
+ * Alternative storage services
+   * AWS S3 backed storage, with database containing metadata to avoid having to download tracks from S3 every start-up
+
  * Better favicon for showing in browser title bar
 
  * Structured logging using the standard log package or something from https://blog.logrocket.com/5-structured-logging-packages-for-go/ ?
@@ -34,4 +46,4 @@
 
  * Track data JSON blob - fetch that via API rather than including in generated HTML data
    * with OpenAPI schema and validation in golang code
- * Optimize track storage in media server (*Track instead of Track)
+ * Optimize track storage in media server (*Track instead of Track?)

@@ -100,7 +100,7 @@ func buildPlaylists(tracksByID map[string]Track) (map[string]Playlist, error) {
 
 // TODO: Probably would be cleaner to have this build the track completely
 // given some input data?
-func (ds *DiskStorage) annotateTrack(track *Track, filename string) {
+func (ds *DiskStorage) annotateTrack(track *Track) {
 	var artist, album, albumArtist, albumId, title string
 
 	// Default playlist location is the directory containing the file.
@@ -120,6 +120,18 @@ func (ds *DiskStorage) annotateTrack(track *Track, filename string) {
 
 		// TODO: track number, and use that to position in playlists.
 
+		// Heuristic: If the album artist wasn't determined by tags or regex,
+		// use the directory name. But only when the filename is like
+		// /basepath/artist/album/filename.flac ,
+		// /basepath/subdir/artist/album/filename.flac , or similar.
+		if albumArtist == "" {
+			trackDir := filepath.Dir(track.Location)
+			albumDir := filepath.Dir(trackDir)
+			if trackDir != ds.BasePath && albumDir != ds.BasePath {
+				albumArtist = filepath.Base(albumDir)
+			}
+		}
+
 		// Use the most defined tag we can for the playlist path.
 		artistPath := artist
 		if albumArtist != "" {
@@ -128,6 +140,7 @@ func (ds *DiskStorage) annotateTrack(track *Track, filename string) {
 		if albumId != "" {
 			artistPath = albumId
 		}
+
 		playlistLocation = "tags:" + filepath.Join(ds.BasePath, artistPath, album)
 	}
 
@@ -137,12 +150,13 @@ func (ds *DiskStorage) annotateTrack(track *Track, filename string) {
 		}
 	*/
 
-	// Strategy 3: Parse from directory and filename
+	// Strategy 3: Parse from directory and filename (heuristic)
 	if artist == "" && album == "" && title == "" {
 		trackDir := filepath.Dir(track.Location)
 		album = filepath.Base(trackDir)
 		artist = filepath.Base(filepath.Dir(trackDir))
 
+		filename := filepath.Base(track.Location)
 		idx := strings.LastIndex(filename, ".")
 		if idx == -1 {
 			idx = len(filename)
@@ -209,7 +223,7 @@ func (ds *DiskStorage) buildTracks() (map[string]Track, map[string]Playlist, err
 			DataLen:  fileinfo.Size(),
 			Tags:     tags,
 		}
-		ds.annotateTrack(&track, d.Name())
+		ds.annotateTrack(&track)
 		tracksByID[track.ID] = track
 
 		return nil

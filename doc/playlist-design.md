@@ -63,8 +63,9 @@ $ find /home/rdawe/Music/mp3/ -name '*monkey kong*' | sort -n | head -n 5
     * 1st: Tags
     * 2nd: Regular expression matches on filename.
     * 3rd: Directory + filename
+    * Note: In some situations we may need to use tags for some fields, but directory when e.g.: album artist is missing (see sections below).
 
-### Implementation
+### Virtual Playlist Locations
 
 Each playlist has a location, which is a unique name for it. For playlists based on file location, this is the directory name, including the base directory for the storage instance. E.g.: `/home/rdawe/Music/cds/Foo_Fighters/There_Is_Nothing_Left_To_Lose` for the album "There Is Nothing Left To Lose" by the Foo Fighters.
 
@@ -73,6 +74,34 @@ What should we use for playlists based on tags or regex matches? Let's use fake 
 Note that there is a playlist for each album by an artist. There is no support for a playlist covering a selection of songs, or multiple albums by an artist. Supporting that is not currently a goal.
 
 The playlist ID is generated using the location. The playlist ID should be stable - i.e.: the same across restarts of minimediaserver.
+
+### Albums with Multiple Artists
+
+Albums may have multiple artists. (I'm using the term "artist" here to cover author, composer, performer.) E.g.: an orchestra playing pieces by multiple composers. Or a compilation by multiple artists. In this case the album may have an overall "album artist" and then per-track artists. It is possible that the artist for the entire album is also the artist for one of the tracks.
+
+For ID3 tags, there is a way to represent multiple artists, using TPE1, TPE2 and TPE3 comments. For Vorbis comments for Ogg and FLAC, there does not seem to be a standard tag. And in any case, the relevant tags may not be present - some heuristics may be required.
+
+If it's possible to determine the "album artist" from the tags on a track, then the tracks can be grouped using (album artist, album).
+
+For FLAC files with no album artist tags, the directory structure might indicate that it's a multi-author one (e.g.: "Various Artists/Album/track1.flac, etc.). In that case, we would want to use the directory name as the album artist, but could use the tags to determine the artist for the track. A reasonable heuristic here is that if directory name != artist from tags, then it's a multi-artist album. Artist names should be compared case-insensitively.
+
+The files may have a CDDB tag, containing the unique ID for the album. This may be used as a reliable way of grouping tracks.
+
+### Grouping Tracks into a Playlist
+
+Note: .m3u files are ignored by this design. Perhaps a future version of this design will consider using them. They are ignored in preference of using the audio files' tags as the source of truth.
+
+To build a playlist, the media server needs to:
+
+ * Find audio files ("tracks")
+ * Examine each track to determine its artist, album, title, and album artist ("annotate" the track information)
+ * Group tracks by (album artist, album) - one playlist per (album artist, album)
+
+When tags are present, we should prefer grouping using the most unique fields available, in this order of preference:
+
+ * `tags:/basepath/albumId/album` (e.g.: using CDDB database ID for the album)
+ * `tags:/basepath/albumArtist/album` (e.g.: when it's a multi-artist album)
+ * `tags:/basepath/artist/album`
 
 TODO: Issues:
 

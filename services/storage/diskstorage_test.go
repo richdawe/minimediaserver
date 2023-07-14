@@ -3,9 +3,11 @@ package storage
 import (
 	"io"
 	"io/fs"
+	"path/filepath"
 	"syscall"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -39,9 +41,9 @@ func TestDiskStorage(t *testing.T) {
 				Title:       "ALBUM1_TRACK1_EXAMPLE",
 				Artist:      "the-artist",
 				Album:       "album1",
-				AlbumArtist: "the-artist",
+				AlbumArtist: "Artist",
 
-				PlaylistLocation: "tags:../../testdata/services/storage/diskstorage/Music/cds/the-artist/album1",
+				PlaylistLocation: "tags:../../testdata/services/storage/diskstorage/Music/cds/Artist/album1",
 
 				Tags: Tags{Title: "ALBUM1_TRACK1_EXAMPLE", Album: "album1", Artist: "the-artist", Genre: "Example", TrackNumber: 1},
 
@@ -55,9 +57,9 @@ func TestDiskStorage(t *testing.T) {
 				Title:       "ALBUM1_TRACK2_EXAMPLE",
 				Artist:      "the-artist",
 				Album:       "album1",
-				AlbumArtist: "the-artist",
+				AlbumArtist: "Artist",
 
-				PlaylistLocation: "tags:../../testdata/services/storage/diskstorage/Music/cds/the-artist/album1",
+				PlaylistLocation: "tags:../../testdata/services/storage/diskstorage/Music/cds/Artist/album1",
 
 				Tags: Tags{Title: "ALBUM1_TRACK2_EXAMPLE", Album: "album1", Artist: "the-artist", Genre: "ExampleMulti-value", TrackNumber: 2},
 
@@ -71,9 +73,9 @@ func TestDiskStorage(t *testing.T) {
 				Title:       "ALBUM2_TRACK1_EXAMPLE",
 				Artist:      "another-artist",
 				Album:       "album2",
-				AlbumArtist: "another-artist",
+				AlbumArtist: "Artist",
 
-				PlaylistLocation: "tags:../../testdata/services/storage/diskstorage/Music/cds/another-artist/album2",
+				PlaylistLocation: "tags:../../testdata/services/storage/diskstorage/Music/cds/Artist/album2",
 
 				Tags: Tags{Title: "ALBUM2_TRACK1_EXAMPLE", Album: "album2", Artist: "another-artist"},
 
@@ -116,22 +118,22 @@ func TestDiskStorage(t *testing.T) {
 
 		assert.Equal(t, []Playlist{
 			{
-				Name:     "another-artist :: album2",
+				Name:     "Artist :: album1",
 				ID:       playlistIDs[0],
-				Location: "tags:../../testdata/services/storage/diskstorage/Music/cds/another-artist/album2",
+				Location: "tags:../../testdata/services/storage/diskstorage/Music/cds/Artist/album1",
+				Tracks:   []Track{tracks[0], tracks[1]},
+			},
+			{
+				Name:     "Artist :: album2",
+				ID:       playlistIDs[1],
+				Location: "tags:../../testdata/services/storage/diskstorage/Music/cds/Artist/album2",
 				Tracks:   []Track{tracks[2]},
 			},
 			{
 				Name:     "the-artist\x00 :: album1\x00",
-				ID:       playlistIDs[1],
+				ID:       playlistIDs[2],
 				Location: "tags:../../testdata/services/storage/diskstorage/Music/cds/the-artist\x00/album1\x00",
 				Tracks:   []Track{tracks[3]},
-			},
-			{
-				Name:     "the-artist :: album1",
-				ID:       playlistIDs[2],
-				Location: "tags:../../testdata/services/storage/diskstorage/Music/cds/the-artist/album1",
-				Tracks:   []Track{tracks[0], tracks[1]},
 			},
 		}, playlists)
 	})
@@ -197,5 +199,200 @@ func TestDiskStorageFailures(t *testing.T) {
 		require.ErrorAs(t, err, &pErr)
 		assert.Equal(t, pErr.Err, syscall.ENOENT)
 		require.Nil(t, s)
+	})
+}
+
+func TestAnnotateTrack(t *testing.T) {
+	ds := &DiskStorage{
+		ID:       uuid.New().String(),
+		BasePath: "/__DOES_NOT__EXIST__/basepath",
+	}
+
+	// Annotate track that has tags, except the album artist.
+	// This should be able to pull the album artist from the filename.
+	t.Run("UseTags", func(t *testing.T) {
+		track := Track{
+			ID:       uuid.New().String(),
+			Location: filepath.Join(ds.BasePath, "artist-path", "not-this-album", "track1.blarg"),
+			Tags: Tags{
+				Title:  "title",
+				Artist: "artist",
+				Album:  "album",
+			},
+		}
+
+		expectedTrack := track
+		expectedTrack.Title = track.Tags.Title
+		expectedTrack.Name = expectedTrack.Title
+		expectedTrack.Artist = track.Tags.Artist
+		expectedTrack.Album = track.Tags.Album
+		expectedTrack.AlbumArtist = "artist-path" // from Location, because no AlbumArtist tag
+		expectedTrack.PlaylistLocation = "tags:" + filepath.Join(ds.BasePath, expectedTrack.AlbumArtist, expectedTrack.Album)
+
+		resultTrack := track
+		ds.annotateTrack(&resultTrack)
+		assert.Equal(t, expectedTrack, resultTrack)
+	})
+
+	// Annotate track that has tags, except the album artist.
+	// There is no artist or album information in the filename,
+	// so the album artist should default to the artist.
+	t.Run("UseTagsFlatDirectory", func(t *testing.T) {
+		track := Track{
+			ID:       uuid.New().String(),
+			Location: filepath.Join(ds.BasePath, "track1.blarg"),
+			Tags: Tags{
+				Title:  "title",
+				Artist: "artist",
+				Album:  "album",
+			},
+		}
+
+		expectedTrack := track
+		expectedTrack.Title = track.Tags.Title
+		expectedTrack.Name = expectedTrack.Title
+		expectedTrack.Artist = track.Tags.Artist
+		expectedTrack.Album = track.Tags.Album
+		expectedTrack.AlbumArtist = track.Tags.Artist
+		expectedTrack.PlaylistLocation = "tags:" + filepath.Join(ds.BasePath, expectedTrack.AlbumArtist, expectedTrack.Album)
+
+		resultTrack := track
+		ds.annotateTrack(&resultTrack)
+		assert.Equal(t, expectedTrack, resultTrack)
+	})
+
+	// Annotate track that has tags, except the album artist.
+	// There is not enough information in the filename,
+	// so the album artist should default to the artist.
+	t.Run("UseTagsSingleDirectory", func(t *testing.T) {
+		track := Track{
+			ID:       uuid.New().String(),
+			Location: filepath.Join(ds.BasePath, "sudir", "track1.blarg"),
+			Tags: Tags{
+				Title:  "title",
+				Artist: "artist",
+				Album:  "album",
+			},
+		}
+
+		expectedTrack := track
+		expectedTrack.Title = track.Tags.Title
+		expectedTrack.Name = expectedTrack.Title
+		expectedTrack.Artist = track.Tags.Artist
+		expectedTrack.Album = track.Tags.Album
+		expectedTrack.AlbumArtist = track.Tags.Artist
+		expectedTrack.PlaylistLocation = "tags:" + filepath.Join(ds.BasePath, expectedTrack.AlbumArtist, expectedTrack.Album)
+
+		resultTrack := track
+		ds.annotateTrack(&resultTrack)
+		assert.Equal(t, expectedTrack, resultTrack)
+	})
+
+	// Verify that the CDDB disc ID is used as the unique ID in the playlist location.
+	t.Run("UseTagsAndCDDBID", func(t *testing.T) {
+		track := Track{
+			ID:       uuid.New().String(),
+			Location: filepath.Join(ds.BasePath, "artist-path", "not-this-album", "track1.blarg"),
+			Tags: Tags{
+				Title:   "title",
+				Artist:  "artist",
+				Album:   "album",
+				AlbumId: "f00dd00d",
+			},
+		}
+
+		expectedTrack := track
+		expectedTrack.Title = track.Tags.Title
+		expectedTrack.Name = expectedTrack.Title
+		expectedTrack.Artist = track.Tags.Artist
+		expectedTrack.Album = track.Tags.Album
+		expectedTrack.AlbumId = track.Tags.AlbumId
+		expectedTrack.AlbumArtist = "artist-path" // from Location, because no AlbumArtist tag
+		expectedTrack.PlaylistLocation = "tags:" + filepath.Join(ds.BasePath, expectedTrack.AlbumId, expectedTrack.Album)
+
+		resultTrack := track
+		ds.annotateTrack(&resultTrack)
+		assert.Equal(t, expectedTrack, resultTrack)
+	})
+
+	t.Run("UseTagsAndAlbumArtist", func(t *testing.T) {
+		track := Track{
+			ID:       uuid.New().String(),
+			Location: filepath.Join(ds.BasePath, "not-this-artist", "not-this-album", "track1.blarg"),
+			Tags: Tags{
+				Title:       "title",
+				Artist:      "artist",
+				Album:       "album",
+				AlbumArtist: "album-artist",
+			},
+		}
+
+		expectedTrack := track
+		expectedTrack.Title = track.Tags.Title
+		expectedTrack.Name = expectedTrack.Title
+		expectedTrack.Artist = track.Tags.Artist
+		expectedTrack.Album = track.Tags.Album
+		expectedTrack.AlbumArtist = track.Tags.AlbumArtist
+		expectedTrack.PlaylistLocation = "tags:" + filepath.Join(ds.BasePath, expectedTrack.AlbumArtist, expectedTrack.Album)
+
+		resultTrack := track
+		ds.annotateTrack(&resultTrack)
+		assert.Equal(t, expectedTrack, resultTrack)
+	})
+
+	// Verify that the CDDB disc ID is used in the playlist location.
+	// It's more unique than the album artist.
+	t.Run("UseTagsAndCDDBIDAndAlbumArtist", func(t *testing.T) {
+		track := Track{
+			ID:       uuid.New().String(),
+			Location: filepath.Join(ds.BasePath, "not-this-artist", "not-this-album", "track1.blarg"),
+			Tags: Tags{
+				Title:       "title",
+				Artist:      "artist",
+				Album:       "album",
+				AlbumId:     "f00dd00d",
+				AlbumArtist: "album-artist",
+			},
+		}
+
+		expectedTrack := track
+		expectedTrack.Title = track.Tags.Title
+		expectedTrack.Name = expectedTrack.Title
+		expectedTrack.Artist = track.Tags.Artist
+		expectedTrack.Album = track.Tags.Album
+		expectedTrack.AlbumId = track.Tags.AlbumId
+		expectedTrack.AlbumArtist = track.Tags.AlbumArtist
+		expectedTrack.PlaylistLocation = "tags:" + filepath.Join(ds.BasePath, expectedTrack.AlbumId, expectedTrack.Album)
+
+		resultTrack := track
+		ds.annotateTrack(&resultTrack)
+		assert.Equal(t, expectedTrack, resultTrack)
+	})
+
+	t.Run("UseRegex", func(t *testing.T) {
+		assert.Equal(t, true, true) // TODO
+	})
+
+	t.Run("UseRegexAlbumArtist", func(t *testing.T) {
+		assert.Equal(t, true, true) // TODO
+	})
+
+	t.Run("UseFilename", func(t *testing.T) {
+		track := Track{
+			ID:       uuid.New().String(),
+			Location: filepath.Join(ds.BasePath, "artist", "album", "track1.blarg"),
+		}
+
+		expectedTrack := track
+		expectedTrack.Title = "track1"
+		expectedTrack.Name = expectedTrack.Title
+		expectedTrack.Artist = "artist"
+		expectedTrack.Album = "album"
+		expectedTrack.AlbumArtist = expectedTrack.Artist
+		expectedTrack.PlaylistLocation = filepath.Join(ds.BasePath, expectedTrack.AlbumArtist, expectedTrack.Album)
+
+		resultTrack := track
+		ds.annotateTrack(&resultTrack)
+		assert.Equal(t, expectedTrack, resultTrack)
 	})
 }

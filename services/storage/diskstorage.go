@@ -68,6 +68,8 @@ func buildPlaylists(tracksByID map[string]Track) (map[string]Playlist, error) {
 			//
 			// This will probably require track.AlbumArtist to be empty,
 			// if it's not defined in tags, so that we know when to use heuristics.
+			//
+			// Note: This has been partially implemented with use of CDDB ID and/or track location.
 			playlistName := fmt.Sprintf("%s :: %s", track.AlbumArtist, track.Album)
 
 			playlist := Playlist{
@@ -98,6 +100,27 @@ func buildPlaylists(tracksByID map[string]Track) (map[string]Playlist, error) {
 	return playlistsByID, nil
 }
 
+// Determine whether the track artist and album artist are the same or similar,
+// using some normalizations and ignoring case.
+func isTrackByAlbumArtist(trackArtist string, albumArtist string) bool {
+	// Replace underscore and dash with space,
+	// since those may commonly be used as replacements for space
+	// in filenames.
+	//
+	// Also to consider, to improve matching:
+	// - removing apostrophes
+	//
+	replacer := func(in string) string {
+		out := strings.ReplaceAll(in, "_", " ")
+		out = strings.ReplaceAll(out, "-", " ")
+		return out
+	}
+
+	a := replacer(trackArtist)
+	b := replacer(albumArtist)
+	return strings.EqualFold(a, b)
+}
+
 // TODO: Probably would be cleaner to have this build the track completely
 // given some input data?
 func (ds *DiskStorage) annotateTrack(track *Track) {
@@ -108,7 +131,6 @@ func (ds *DiskStorage) annotateTrack(track *Track) {
 	playlistLocation := filepath.Dir(track.Location)
 	// TODO: need a default playlist name here too (e.g.: for "mp3" directory)
 	// in case the strategy doesn't work.
-	// TODO: need to be able to unit test these strategies.
 
 	// Strategy 1: Use tags to determine artist, album, etc. information.
 	if track.Tags.Artist != "" && track.Tags.Album != "" && track.Tags.Title != "" {
@@ -145,6 +167,7 @@ func (ds *DiskStorage) annotateTrack(track *Track) {
 	}
 
 	// Strategy 2: Regular expression matching (if enabled for this storage instance).
+	// TODO: implement regex strategy
 	/*
 		if artist == "" && album == "" && title == "" {
 		}
@@ -174,7 +197,14 @@ func (ds *DiskStorage) annotateTrack(track *Track) {
 	track.AlbumArtist = albumArtist
 	track.AlbumId = albumId
 	track.Title = title
-	track.Name = title
+
+	// Determine if the track name should include the track's artist,
+	// for multi-artist albums.
+	if isTrackByAlbumArtist(track.Artist, track.AlbumArtist) {
+		track.Name = track.Title
+	} else {
+		track.Name = fmt.Sprintf("%s :: %s", track.Artist, track.Title)
+	}
 
 	track.PlaylistLocation = playlistLocation
 }

@@ -12,6 +12,8 @@
  * Alternative storage services
    * AWS S3 backed storage, with database containing metadata to avoid having to download tracks from S3 every start-up
 
+ * Keep player at top of page when scrolling long list
+
  * Better favicon for showing in browser title bar
 
  * Structured logging using the standard log package or something from https://blog.logrocket.com/5-structured-logging-packages-for-go/ ?
@@ -33,8 +35,8 @@
    * ID3 (DONE, needs unit test coverage)
    * ID3 v2 (DONE, needs unit test coverage)
    * M4A files from iTunes
-   * Use for artist + title instead of filenames in playlists
-   * Generate playlists based off tags (if present) rather than file location - playlist per album
+   * Use for artist + title instead of filenames in playlists (DONE)
+   * Generate playlists based off tags (if present) rather than file location - playlist per album (DONE)
 
  * Save volume level across invocations of page? (cookies? local storage?)
 

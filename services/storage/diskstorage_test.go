@@ -37,7 +37,7 @@ func TestDiskStorage(t *testing.T) {
 
 		assert.Equal(t, []Track{
 			{
-				Name:        "ALBUM1_TRACK1_EXAMPLE",
+				Name:        "the-artist :: ALBUM1_TRACK1_EXAMPLE",
 				Title:       "ALBUM1_TRACK1_EXAMPLE",
 				Artist:      "the-artist",
 				Album:       "album1",
@@ -53,7 +53,7 @@ func TestDiskStorage(t *testing.T) {
 				DataLen:  105354,
 			},
 			{
-				Name:        "ALBUM1_TRACK2_EXAMPLE",
+				Name:        "the-artist :: ALBUM1_TRACK2_EXAMPLE",
 				Title:       "ALBUM1_TRACK2_EXAMPLE",
 				Artist:      "the-artist",
 				Album:       "album1",
@@ -69,7 +69,7 @@ func TestDiskStorage(t *testing.T) {
 				DataLen:  980027,
 			},
 			{
-				Name:        "ALBUM2_TRACK1_EXAMPLE",
+				Name:        "another-artist :: ALBUM2_TRACK1_EXAMPLE",
 				Title:       "ALBUM2_TRACK1_EXAMPLE",
 				Artist:      "another-artist",
 				Album:       "album2",
@@ -202,6 +202,37 @@ func TestDiskStorageFailures(t *testing.T) {
 	})
 }
 
+func TestIsTrackByAlbumArtist(t *testing.T) {
+	testCases := []struct {
+		TrackArtist string
+		AlbumArtist string
+		Expected    bool
+	}{
+		// Basic case-insensitivity
+		{"Fred", "Fred", true},
+		{"Fred", "fred", true},
+		{"fred", "FRED", true},
+		{"Fred Bloggs", "Fred Bloggs", true},
+
+		// Underscore matching (converted to space)
+		{"Fred_Bloggs", "Fred Bloggs", true},
+		{"Fred Bloggs", "Fred_Bloggs", true},
+		{"Fred_Bloggs", "Fred_Bloggs", true},
+		{"Fred Bloggs", "Fred___Bloggs", false},
+
+		// Dash matching (converted to space)
+		{"Fred-Bloggs", "Fred Bloggs", true},
+		{"Fred Bloggs", "Fred-Bloggs", true},
+		{"Fred-Bloggs", "Fred-Bloggs", true},
+		{"Fred Bloggs", "Fred---Bloggs", false},
+	}
+
+	for i, testCase := range testCases {
+		res := isTrackByAlbumArtist(testCase.TrackArtist, testCase.AlbumArtist)
+		assert.Equal(t, testCase.Expected, res, "[i=%d] %s %s", i, testCase.TrackArtist, testCase.AlbumArtist)
+	}
+}
+
 func TestAnnotateTrack(t *testing.T) {
 	ds := &DiskStorage{
 		ID:       uuid.New().String(),
@@ -223,7 +254,7 @@ func TestAnnotateTrack(t *testing.T) {
 
 		expectedTrack := track
 		expectedTrack.Title = track.Tags.Title
-		expectedTrack.Name = expectedTrack.Title
+		expectedTrack.Name = track.Tags.Artist + " :: " + track.Tags.Title // artist different from album artist
 		expectedTrack.Artist = track.Tags.Artist
 		expectedTrack.Album = track.Tags.Album
 		expectedTrack.AlbumArtist = "artist-path" // from Location, because no AlbumArtist tag
@@ -303,7 +334,7 @@ func TestAnnotateTrack(t *testing.T) {
 
 		expectedTrack := track
 		expectedTrack.Title = track.Tags.Title
-		expectedTrack.Name = expectedTrack.Title
+		expectedTrack.Name = track.Tags.Artist + " :: " + track.Tags.Title // artist different from album artist
 		expectedTrack.Artist = track.Tags.Artist
 		expectedTrack.Album = track.Tags.Album
 		expectedTrack.AlbumId = track.Tags.AlbumId
@@ -329,7 +360,7 @@ func TestAnnotateTrack(t *testing.T) {
 
 		expectedTrack := track
 		expectedTrack.Title = track.Tags.Title
-		expectedTrack.Name = expectedTrack.Title
+		expectedTrack.Name = track.Tags.Artist + " :: " + track.Tags.Title // artist different from album artist
 		expectedTrack.Artist = track.Tags.Artist
 		expectedTrack.Album = track.Tags.Album
 		expectedTrack.AlbumArtist = track.Tags.AlbumArtist
@@ -357,7 +388,7 @@ func TestAnnotateTrack(t *testing.T) {
 
 		expectedTrack := track
 		expectedTrack.Title = track.Tags.Title
-		expectedTrack.Name = expectedTrack.Title
+		expectedTrack.Name = track.Tags.Artist + " :: " + track.Tags.Title // artist different from album artist
 		expectedTrack.Artist = track.Tags.Artist
 		expectedTrack.Album = track.Tags.Album
 		expectedTrack.AlbumId = track.Tags.AlbumId

@@ -12,7 +12,10 @@
  * Alternative storage services
    * AWS S3 backed storage, with database containing metadata to avoid having to download tracks from S3 every start-up
 
+ * Optionally allow storage backend instances to be named (and use this in error/log messages).
+
  * Keep player at top of page when scrolling long list
+   * Less important now that the filename -> album regexp code is working (previously a directory of 1000s of MP3s would show up as one long album) 
 
  * Better favicon for showing in browser title bar
 
@@ -20,8 +23,6 @@
 
  * Listen to media hotkeys in browser (and optionally allow this to be disabled?)
  * Stop playing music when the computer is being suspended/hibernated
-
- * Document hotkeys somewhere
 
  * Bug: Still can't skip on long tracks when using remote minimediaserver (not local one)
    * This seems to be a Firefox HTML audio player thing, rather than a golang HTTP server thing.

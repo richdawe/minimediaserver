@@ -8,7 +8,9 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -17,6 +19,9 @@ import (
 type DiskStorage struct {
 	ID       string
 	BasePath string
+	Regexps  []string
+
+	compiledRegexps []*regexp.Regexp
 
 	tracksByID    map[string]Track
 	playlistsByID map[string]Playlist
@@ -46,10 +51,6 @@ func (ds *DiskStorage) FindTracks() ([]Track, []Playlist, error) {
 	return ds.sortedTracks, ds.sortedPlaylists, nil
 }
 
-// TODO: This builds playlists based on albums having their own directory.
-// Other music collections (e.g.: my MP3s) use a flat format
-// with everything encoded in one filename. Could use with the playlist building
-// strategy being pluggable.
 func buildPlaylists(tracksByID map[string]Track) (map[string]Playlist, error) {
 	playlistsByID := make(map[string]Playlist, 0)
 	playlistsByLocation := make(map[string]string, 0) // value is playlist ID
@@ -121,6 +122,53 @@ func isTrackByAlbumArtist(trackArtist string, albumArtist string) bool {
 	return strings.EqualFold(a, b)
 }
 
+func removeFileExtension(filename string) string {
+	idx := strings.LastIndex(filename, ".")
+	if idx == -1 {
+		idx = len(filename)
+	}
+	return filename[:idx]
+}
+
+// Use any regular expressions for this storage to match track artist,
+// etc. from the filename.
+func (ds *DiskStorage) matchLocation(location string) *Track {
+	if len(ds.compiledRegexps) == 0 {
+		return nil
+	}
+
+	var t *Track
+	filename := filepath.Base(location)
+	filename = removeFileExtension(filename)
+
+	for _, c := range ds.compiledRegexps {
+		matches := c.FindStringSubmatch(filename)
+		if matches == nil {
+			continue
+		}
+
+		t = &Track{}
+		if idx := c.SubexpIndex("albumartist"); idx != -1 {
+			t.AlbumArtist = strings.Trim(matches[idx], " ")
+		}
+		if idx := c.SubexpIndex("album"); idx != -1 {
+			t.Album = strings.Trim(matches[idx], " ")
+		}
+		if idx := c.SubexpIndex("trackno"); idx != -1 {
+			t.TrackNumber, _ = strconv.Atoi(matches[idx])
+		}
+		if idx := c.SubexpIndex("artist"); idx != -1 {
+			t.Artist = strings.Trim(matches[idx], " ")
+		}
+		if idx := c.SubexpIndex("title"); idx != -1 {
+			t.Title = strings.Trim(matches[idx], " ")
+		}
+		break
+	}
+
+	return t
+}
+
 // TODO: Probably would be cleaner to have this build the track completely
 // given some input data?
 func (ds *DiskStorage) annotateTrack(track *Track) {
@@ -138,6 +186,7 @@ func (ds *DiskStorage) annotateTrack(track *Track) {
 		album = track.Tags.Album
 		albumArtist = track.Tags.AlbumArtist
 		albumId = track.Tags.AlbumId
+		// TODO: track number
 		title = track.Tags.Title
 
 		// TODO: track number, and use that to position in playlists.
@@ -167,11 +216,25 @@ func (ds *DiskStorage) annotateTrack(track *Track) {
 	}
 
 	// Strategy 2: Regular expression matching (if enabled for this storage instance).
-	// TODO: implement regex strategy
-	/*
-		if artist == "" && album == "" && title == "" {
+	if artist == "" && album == "" && title == "" {
+		if t := ds.matchLocation(track.Location); t != nil {
+			album = t.Album
+			artist = t.Artist
+			title = t.Title
+			// TODO: track number
+			if t.AlbumArtist != "" {
+				albumArtist = t.AlbumArtist
+			}
+
+			// Use the most defined tag we can for the playlist path.
+			artistPath := artist
+			if albumArtist != "" {
+				artistPath = albumArtist
+			}
+
+			playlistLocation = "regex:" + filepath.Join(ds.BasePath, artistPath, album)
 		}
-	*/
+	}
 
 	// Strategy 3: Parse from directory and filename (heuristic)
 	if artist == "" && album == "" && title == "" {
@@ -180,11 +243,7 @@ func (ds *DiskStorage) annotateTrack(track *Track) {
 		artist = filepath.Base(filepath.Dir(trackDir))
 
 		filename := filepath.Base(track.Location)
-		idx := strings.LastIndex(filename, ".")
-		if idx == -1 {
-			idx = len(filename)
-		}
-		title = filename[:idx]
+		title = removeFileExtension(filename)
 	}
 
 	// Finally, annotate the track.
@@ -332,7 +391,25 @@ func (ds *DiskStorage) ReadTrack(id string) (io.Reader, error) {
 	return bytes.NewReader(data), nil
 }
 
-func NewDiskStorage(path string) (*DiskStorage, error) {
+func (ds *DiskStorage) setRegexps(regexps []string) error {
+	ds.Regexps = make([]string, 0)
+	ds.compiledRegexps = make([]*regexp.Regexp, 0)
+
+	for _, r := range regexps {
+		c, err := regexp.Compile(r)
+		if err != nil {
+			// TODO: perhaps this should be a non-fatal error during start-up -
+			// log a warning but carry on?
+			return err
+		}
+		ds.Regexps = append(ds.Regexps, r)
+		ds.compiledRegexps = append(ds.compiledRegexps, c)
+	}
+
+	return nil
+}
+
+func NewDiskStorage(path string, regexps []string) (*DiskStorage, error) {
 	fileinfo, err := os.Stat(path)
 	if err != nil {
 		return nil, err
@@ -341,8 +418,13 @@ func NewDiskStorage(path string) (*DiskStorage, error) {
 		return nil, fmt.Errorf("%s is not a directory", path)
 	}
 
-	return &DiskStorage{
-		ID:       uuid.New().String(),
+	ds := &DiskStorage{
+		ID:       uuid.NewString(),
 		BasePath: path,
-	}, nil
+	}
+	err = ds.setRegexps(regexps)
+	if err != nil {
+		return nil, err
+	}
+	return ds, nil
 }

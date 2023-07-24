@@ -67,7 +67,7 @@ func (ns *NullStorage) FindTracks() ([]Track, []Playlist, error) {
 
 	playlist := Playlist{
 		Name:     "null-playlist",
-		ID:       uuid.New().String(),
+		ID:       uuid.NewString(),
 		Location: "/null",
 		Tracks:   tracks,
 	}
@@ -94,7 +94,7 @@ func (ns *NullStorage) ReadTrack(id string) (io.Reader, error) {
 
 func NewNullStorage() (*NullStorage, error) {
 	return &NullStorage{
-		ID:         uuid.New().String(),
+		ID:         uuid.NewString(),
 		tracksByID: make(map[string]Track),
 	}, nil
 }

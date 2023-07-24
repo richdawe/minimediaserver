@@ -13,6 +13,14 @@
 		{
 			"type": "diskStorage",
 			"path": "$HOME/Music/iTunes/iTunes Media/Music"
+		},
+		{
+			"type": "diskStorage",
+			"path": "$HOME/Music/mp3",
+			"regexps": [
+				"(?P<albumartist>.+) - (?P<album>.+) \\((?P<trackno>\\d+)\\) - (?P<artist>.+) - (?P<title>.+)",
+				"(?P<artist>.+) - (?P<album>.+) \\((?P<trackno>\\d+)\\) - (?P<title>.+)"
+			]
 		}
 	],
 

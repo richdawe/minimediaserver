@@ -11,8 +11,9 @@ import (
 )
 
 type StorageServiceConfig struct {
-	Type string `mapstructure:"type"`
-	Path string `mapstructure:"path"`
+	Type    string   `mapstructure:"type"`
+	Path    string   `mapstructure:"path"`
+	Regexps []string `mapstructure:"regexps"`
 }
 
 type Config struct {
@@ -97,7 +98,7 @@ func buildCatalog(config Config) (catalog.CatalogService, error) {
 				path = "."
 			}
 			path = strings.Replace(path, "$HOME", os.Getenv("HOME"), -1)
-			ss, err = storage.NewDiskStorage(path)
+			ss, err = storage.NewDiskStorage(path, css.Regexps)
 		default:
 			err = fmt.Errorf("unknown storage service %s", css.Type)
 		}

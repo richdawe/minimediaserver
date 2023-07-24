@@ -3,6 +3,7 @@ package catalog
 import (
 	"errors"
 	"io"
+	"sort"
 
 	"github.com/richdawe/minimediaserver/services/storage"
 )
@@ -64,9 +65,31 @@ func (cs *BasicCatalog) AddStorage(ss storage.StorageService) error {
 		}
 
 		cs.playlistsByID[playlist.ID] = playlist
-		cs.allPlaylists = append(cs.allPlaylists, playlist)
 	}
+	cs.allPlaylists = sortPlaylists(cs.playlistsByID)
+
 	return nil
+}
+
+// Find and sort the playlist IDs based on the name
+// of the playlist. Then build list of sorted playlists
+// using the sorted list of playlist IDs.
+func sortPlaylists(playlistsByID map[string]Playlist) []Playlist {
+	playlistIDs := make([]string, 0, 1)
+	for _, playlist := range playlistsByID {
+		playlistIDs = append(playlistIDs, playlist.ID)
+	}
+	sort.Slice(playlistIDs, func(i int, j int) bool {
+		playlistI := playlistsByID[playlistIDs[i]]
+		playlistJ := playlistsByID[playlistIDs[j]]
+		return playlistI.Name < playlistJ.Name
+	})
+
+	playlists := make([]Playlist, 0, 1)
+	for _, playlistID := range playlistIDs {
+		playlists = append(playlists, playlistsByID[playlistID])
+	}
+	return playlists
 }
 
 func (cs *BasicCatalog) GetTracks() ([]Track, []Playlist) {

@@ -293,7 +293,7 @@ func (ds *DiskStorage) buildSortedTracks() ([]Track, []Playlist) {
 		tracks = append(tracks, tracksByID[trackID])
 	}
 
-	// Find and sort the playlist IDs based on the location
+	// Find and sort the playlist IDs based on the name
 	// of the playlist. Then build list of sorted playlists
 	// using the sorted list of playlist IDs.
 	playlistIDs := make([]string, 0, 1)
@@ -303,7 +303,7 @@ func (ds *DiskStorage) buildSortedTracks() ([]Track, []Playlist) {
 	sort.Slice(playlistIDs, func(i int, j int) bool {
 		playlistI := playlistsByID[playlistIDs[i]]
 		playlistJ := playlistsByID[playlistIDs[j]]
-		return playlistI.Location < playlistJ.Location
+		return playlistI.Name < playlistJ.Name
 	})
 
 	playlists := make([]Playlist, 0, 1)
@@ -311,7 +311,8 @@ func (ds *DiskStorage) buildSortedTracks() ([]Track, []Playlist) {
 		playlists = append(playlists, playlistsByID[playlistID])
 	}
 
-	// TODO: sort tracks in playlist too
+	// TODO: sort tracks in playlist too, to match
+	// track ordering from tags.
 
 	return tracks, playlists
 }

@@ -6,12 +6,17 @@ build:
 
 # Cross-compile
 .PHONY:	build-cross
-build-cross:	build build-macos
+build-cross:	build build-macos build-rpi4
 
 # https://www.digitalocean.com/community/tutorials/how-to-build-go-executables-for-multiple-platforms-on-ubuntu-16-04#step-4-building-executables-for-different-architectures
 .PHONY: build-macos
 build-macos:
 	GOOS=darwin GOARCH=amd64 go build -v -o bin/minimediaserver.macos-amd64 ./cmd
+
+# https://mansfield-devine.com/speculatrix/2019/02/go-on-raspberry-pi-simple-cross-compiling/
+# https://github.com/golang/go/wiki/GoArm
+build-rpi4:
+	GOOS=linux GOARCH=arm64 go build -v -o bin/minimediaserver.rpi4-arm64 ./cmd
 
 .PHONY: run
 run:

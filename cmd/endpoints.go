@@ -7,12 +7,15 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
+	"github.com/richdawe/minimediaserver/internal/httprange"
+	"github.com/richdawe/minimediaserver/internal/offsetlimitreader"
 	"github.com/richdawe/minimediaserver/services/catalog"
 )
 
@@ -59,15 +62,51 @@ func getTracksByIDData(c echo.Context, catalogService catalog.CatalogService, ca
 		// TODO: return appropriate error for e.g.: track that doesn't exist
 		return err
 	}
+
+	// Parse any requested byte ranges.
+	// This article was really helpful in adding this functionality;
+	// <https://www.zeng.dev/post/2023-http-range-and-play-mp4-in-browser/>
+	var httpRanges []httprange.HttpRange
+
+	rangeVal := c.Request().Header.Get("Range")
+	if rangeVal != "" {
+		httpRanges, err = httprange.ParseRange(rangeVal, track.DataLen)
+		if err != nil {
+			// TODO: return appropriate error
+			return err
+		}
+	}
+
 	r, err := catalogService.ReadTrack(track)
 	if err != nil {
 		// TODO: return appropriate error for e.g.: track that can't be read
 		return err
 	}
 
+	// Ensure that the first requested range is returned.
+	responseCode := http.StatusOK
+	if len(httpRanges) > 0 {
+		start := httpRanges[0].Start
+		length := httpRanges[0].Length
+		maxChunkSize := int64(1024 * 1024)
+		if length > maxChunkSize {
+			length = maxChunkSize
+		}
+
+		r = offsetlimitreader.New(r, start, length)
+
+		// TODO: test coverage for range header; should use httprange code from go?
+		rangeResponse := fmt.Sprintf("bytes %d-%d/%d", start, start+length-1, track.DataLen)
+		c.Response().Header().Add("Content-Range", rangeResponse)
+		c.Response().Header().Add("Content-Length", strconv.FormatInt(length, 10))
+		responseCode = http.StatusPartialContent
+	}
+
+	// Allow ranges to be requested.
+	c.Response().Header().Add("Accept-Ranges", "bytes")
 	// Allow the track data to be cached by the client.
 	c.Response().Header().Add("Cache-Control", fmt.Sprintf("max-age=%d", cacheMaxAge))
-	return c.Stream(http.StatusOK, track.MIMEType, r)
+	return c.Stream(responseCode, track.MIMEType, r)
 }
 
 func getPlaylists(c echo.Context, catalogService catalog.CatalogService) error {
@@ -108,6 +147,7 @@ func setupEndpoints(config Config, catalogService catalog.CatalogService) (*echo
 	e.Renderer = tr
 
 	e.Pre(middleware.RemoveTrailingSlash())
+	e.Use(middleware.RequestID())
 
 	// Don't wait process requests indefinitely.
 	e.Server.ReadTimeout = time.Duration(60 * time.Second)

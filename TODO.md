@@ -1,3 +1,19 @@
+ * Improve how it works in Chrome (MOSTLY DONE, needs more tests)
+   * Can't seek in files
+   * Chrome seems to download a bit and then halt
+   * Support range queries?
+   * golang net/http/fs has range parsing, but it's private, could borrow? https://cs.opensource.google/go/go/+/refs/tags/go1.21.3:src/net/http/fs.go;l=837
+   * Also helpful: https://www.zeng.dev/post/2023-http-range-and-play-mp4-in-browser/
+   * Maybe helpful? https://stackoverflow.com/questions/39961598/video-seeking-in-google-chrome-how-to-handle-continuous-partial-content-request
+
+ * Add memory debugging endpoints
+   * Stack dump to log too?
+
+ * Basic video player support
+   * Directory of videos => album
+
+ * Media player tab doesn't give you an error when server is down; just hangs?
+
  * Command-line switches for help
 
  * Log stats during start-up
@@ -24,7 +40,7 @@
  * Listen to media hotkeys in browser (and optionally allow this to be disabled?)
  * Stop playing music when the computer is being suspended/hibernated
 
- * Bug: Still can't skip on long tracks when using remote minimediaserver (not local one)
+ * Bug: Still can't skip on long tracks when using remote minimediaserver (not local one) (PROBABLY FIXED by Chrome+range changes)
    * This seems to be a Firefox HTML audio player thing, rather than a golang HTTP server thing.
    * Would it help to be able to support fetching data ranges on a track? Instead of streaming the response with echo .Stream()?
    * JS code could pre-fetch, to populate the browser's cache?

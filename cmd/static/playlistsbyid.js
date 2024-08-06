@@ -5,6 +5,7 @@
     https://developer.mozilla.org/en-US/docs/Web/API/Element/click_event
     https://developer.mozilla.org/en-US/docs/Web/HTML/Element/audio
     https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement
+    https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
 */
 
 let tracks = [];
@@ -88,6 +89,12 @@ function initAudioPlayer(availableTracks, n) {
     const nextButton = document.querySelector("#next");
     const audioPlayer = document.querySelector("#player");
 
+    // Load/save volume level in local storage (where available).
+    loadAudio(audioPlayer);
+    audioPlayer.addEventListener("volumechange", () => {
+        saveAudio(audioPlayer);
+    });
+
     // Play/pause via audio player or button
     playButton.addEventListener("click", () => {
         pauseOrPlay();
@@ -163,4 +170,53 @@ function initAudioPlayer(availableTracks, n) {
             return;
         }
     });
+}
+
+// Based on storageAvailable from
+// https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
+function localStorageAvailable() {
+    let storage;
+    try {
+        storage = window["localStorage"];
+        const x = "__storage_test__";
+        storage.setItem(x, x);
+        storage.removeItem(x);
+        return true;
+    } catch (e) {
+        return (
+            e instanceof DOMException &&
+            e.name === "QuotaExceededError" &&
+            // acknowledge QuotaExceededError only if there's something already stored
+            storage &&
+            storage.length !== 0
+        );
+    }
+}
+
+// TODO: save muted status as well
+// TODO: button to clear local storage
+function loadAudio(audioPlayer) {
+    let audio = {};
+
+    if (localStorageAvailable()) {
+        const val = localStorage.getItem("audio");
+        if (val !== null) {
+            audio = JSON.parse(val);
+        }
+    }
+
+    if (audio.volume !== null && audio.volume !== undefined) {
+        audioPlayer.volume = audio.volume;
+    }
+}
+
+function saveAudio(audioPlayer) {
+    const audio = {
+        volume: audioPlayer.volume,
+    };
+    const val = JSON.stringify(audio);
+
+    if (localStorageAvailable()) {
+        localStorage.setItem("audio", val);
+    }
 }

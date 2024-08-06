@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-flac/flacvorbis"
-	"github.com/go-flac/go-flac"
+	flacvorbis "github.com/go-flac/flacvorbis/v2"
+	flac "github.com/go-flac/go-flac/v2"
 	"github.com/jfreymuth/oggvorbis"
 	id3 "github.com/richdawe/id3-go"
 	v2 "github.com/richdawe/id3-go/v2"

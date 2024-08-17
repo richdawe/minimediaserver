@@ -193,7 +193,6 @@ function localStorageAvailable() {
     }
 }
 
-// TODO: save muted status as well
 // TODO: button to clear local storage
 function loadAudio(audioPlayer) {
     let audio = {};
@@ -208,11 +207,15 @@ function loadAudio(audioPlayer) {
     if (audio.volume !== null && audio.volume !== undefined) {
         audioPlayer.volume = audio.volume;
     }
+    if (audio.muted !== null && audio.muted !== undefined) {
+        audioPlayer.muted = audio.muted;
+    }
 }
 
 function saveAudio(audioPlayer) {
     const audio = {
         volume: audioPlayer.volume,
+        muted: audioPlayer.muted,
     };
     const val = JSON.stringify(audio);
 

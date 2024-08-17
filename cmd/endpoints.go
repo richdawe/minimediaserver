@@ -96,6 +96,7 @@ func getTracksByIDData(c echo.Context, catalogService catalog.CatalogService, ca
 		r = offsetlimitreader.New(r, start, length)
 
 		// TODO: test coverage for range header; should use httprange code from go?
+		// TODO: include range in HTTP logs
 		rangeResponse := fmt.Sprintf("bytes %d-%d/%d", start, start+length-1, track.DataLen)
 		c.Response().Header().Add("Content-Range", rangeResponse)
 		c.Response().Header().Add("Content-Length", strconv.FormatInt(length, 10))

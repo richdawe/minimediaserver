@@ -55,7 +55,11 @@
    * Use for artist + title instead of filenames in playlists (DONE)
    * Generate playlists based off tags (if present) rather than file location - playlist per album (DONE)
 
- * Save volume level across invocations of page? (cookies? local storage?)
+ * Include byte ranges in the HTTP logs
+   * Might help debug weird pauses seen in Chrome on macOS, where my RPi takes 3+ minutes to send most of the data???
+   * Possibly related issue: https://issues.chromium.org/issues/40942481
+   * I think it was a Chrome issue - I haven't seen this with newer Chromes on macOS.
+   * Although maybe something is off? My RPi 4 seems to wedge periodically with network buffer errors and I can't ssh into it. Is minimediaserver causing it?
 
  * Try out on mobile phone. Need media queries to adjust layout for smaller screens or readability?
 

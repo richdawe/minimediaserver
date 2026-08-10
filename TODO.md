@@ -22,7 +22,7 @@
 
  * Disk storage service improvements
    * Allow for storage backend errors - optionally ignore if configured (e.g.: for NFS)
-   * Refresh every n seconds
+   * Refresh every N seconds
    * Look at improving start-up time using parallel directory exploration (queue w/ goroutines?)
 
  * Alternative storage services
@@ -51,7 +51,8 @@
    * Ogg (Vorbis comments) (DONE, needs unit test coverage)
    * ID3 (DONE, needs unit test coverage)
    * ID3 v2 (DONE, needs unit test coverage)
-   * M4A files from iTunes
+   * M4A files from iTunes - currently the name generation misses out e.g.: artist name for compliation tracks
+     * Also artist names end up with underscores rather than spaces with current method, which makes finding them hard sometimes.
    * Use for artist + title instead of filenames in playlists (DONE)
    * Generate playlists based off tags (if present) rather than file location - playlist per album (DONE)
 
@@ -60,6 +61,7 @@
    * Possibly related issue: https://issues.chromium.org/issues/40942481
    * I think it was a Chrome issue - I haven't seen this with newer Chromes on macOS.
    * Although maybe something is off? My RPi 4 seems to wedge periodically with network buffer errors and I can't ssh into it. Is minimediaserver causing it?
+   * Doesn't seem to happen as much now - closed?
 
  * Try out on mobile phone. Need media queries to adjust layout for smaller screens or readability?
 
